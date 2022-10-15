@@ -24,7 +24,7 @@ func (c *Client) GetCurrentUser(ctx context.Context) (resources.User, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return resources.User{}, handleError(res)
+		return resources.User{}, handleResponseError(res)
 	}
 
 	rawBody, err := io.ReadAll(res.Body)
@@ -53,7 +53,7 @@ func (c *Client) GetUser(ctx context.Context, id int) (resources.User, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return resources.User{}, handleError(res)
+		return resources.User{}, handleResponseError(res)
 	}
 
 	rawBody, err := io.ReadAll(res.Body)
@@ -88,7 +88,7 @@ func (c *Client) UpdateUser(ctx context.Context, id int, params UserParams) (res
 
 	path := fmt.Sprintf("%s/%d", basePath, id)
 
-	p := map[string]string{}
+	p := map[string]interface{}{}
 	for k, v := range params {
 		p[string(k)] = v
 	}
@@ -99,7 +99,7 @@ func (c *Client) UpdateUser(ctx context.Context, id int, params UserParams) (res
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return resources.User{}, handleError(res)
+		return resources.User{}, handleResponseError(res)
 	}
 
 	rawBody, err := io.ReadAll(res.Body)
