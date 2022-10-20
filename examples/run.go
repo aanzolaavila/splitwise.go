@@ -69,6 +69,7 @@ func main() {
 
 	userExamples(ctx, client)
 	groupExamples(ctx, client)
+	friendsExamples(ctx, client)
 }
 
 func userExamples(ctx context.Context, client splitwise.Client) {
@@ -170,4 +171,46 @@ func groupExamples(ctx context.Context, client splitwise.Client) {
 	}
 
 	fmt.Println("group deleted again")
+}
+
+func friendsExamples(ctx context.Context, client splitwise.Client) {
+	friends, err := client.GetFriends(ctx)
+	if err != nil {
+		log.Fatalf("error getting friends: %v", err)
+	}
+
+	fmt.Println("Friends")
+	for _, f := range friends {
+		fmt.Printf("friend #%d: %s\n", f.ID, f.Email)
+	}
+
+	if len(friends) > 0 {
+		id := friends[0].ID
+		friend, err := client.GetFriend(ctx, id)
+		if err != nil {
+			log.Fatalf("error getting friend #%d: %v", id, err)
+		}
+
+		fmt.Printf("friend #%d - Name %s - Email %s\n", friend.ID, friend.FirstName, friend.Email)
+	}
+
+	// add a friend
+	const friendEmail = "false_friend@mail.com"
+	params := splitwise.FriendParams{}
+	params[splitwise.FriendFirstname] = "False"
+	params[splitwise.FriendLastname] = "Friend"
+	friend, err := client.AddFriend(ctx, friendEmail, params)
+	if err != nil {
+		log.Fatalf("failed to create friend: %v", err)
+	}
+
+	fmt.Printf("created friend: %+v\n", friend)
+
+	friendId := friend.ID
+	err = client.DeleteFriend(ctx, friendId)
+	if err != nil {
+		log.Fatalf("failed to delete friend: %d", friendId)
+	}
+
+	fmt.Printf("deleted friend: %d\n", friendId)
 }

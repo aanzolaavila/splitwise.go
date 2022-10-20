@@ -150,7 +150,7 @@ func handleStatusOkErrorResponse(res *http.Response) error {
 		return fmt.Errorf("unexpected success response: %v", successValue)
 	}
 
-	if successStatus == true {
+	if successStatus {
 		return nil
 	}
 
