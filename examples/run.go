@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aanzolaavila/splitwise.go"
 	"golang.org/x/oauth2"
@@ -70,6 +71,7 @@ func main() {
 	userExamples(ctx, client)
 	groupExamples(ctx, client)
 	friendsExamples(ctx, client)
+	expensesExamples(ctx, client)
 }
 
 func userExamples(ctx context.Context, client splitwise.Client) {
@@ -213,4 +215,19 @@ func friendsExamples(ctx context.Context, client splitwise.Client) {
 	}
 
 	fmt.Printf("deleted friend: %d\n", friendId)
+}
+
+func expensesExamples(ctx context.Context, client splitwise.Client) {
+	params := splitwise.ExpensesParams{}
+	const monthDuration = 60 * 60 * 24 * 30
+	params[splitwise.ExpensesDatedAfter] = time.Now().Add(-1 * 3 * monthDuration * time.Second)
+	expenses, err := client.GetExpenses(ctx, params)
+	if err != nil {
+		log.Fatalf("failed to get expenses: %v", err)
+	}
+
+	fmt.Printf("Expenses:\n")
+	for _, e := range expenses {
+		fmt.Printf("Expense #%d [%s]: %s\n", e.ID, e.Date, e.Description)
+	}
 }
