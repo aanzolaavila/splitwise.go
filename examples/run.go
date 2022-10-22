@@ -274,6 +274,28 @@ func expensesExamples(ctx context.Context, client splitwise.Client) {
 
 			fmt.Printf("expense #%d deleted\n", e.ID)
 		}
+
+		// let's restore them
+		fmt.Printf("restoring deleted expenses\n")
+		for _, e := range expenses {
+			err := client.RestoreExpense(ctx, e.ID)
+			if err != nil {
+				log.Fatalf("could not undelete expense #%d", e.ID)
+			}
+
+			fmt.Printf("expense #%d restored\n", e.ID)
+		}
+
+		// let's delete those test expenses again
+		fmt.Printf("deleting restored expenses\n")
+		for _, e := range expenses {
+			err := client.DeleteExpense(ctx, e.ID)
+			if err != nil {
+				log.Fatalf("could not delete expense #%d", e.ID)
+			}
+
+			fmt.Printf("expense #%d deleted again\n", e.ID)
+		}
 	}
 
 }

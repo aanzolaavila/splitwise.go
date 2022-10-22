@@ -243,3 +243,24 @@ func (c *Client) DeleteExpense(ctx context.Context, id int) error {
 
 	return nil
 }
+
+func (c *Client) RestoreExpense(ctx context.Context, id int) error {
+	const basePath = "/undelete_expense"
+
+	path := fmt.Sprintf("%s/%d", basePath, id)
+
+	res, err := c.do(ctx, http.MethodPost, path, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return handleResponseError(res)
+	}
+
+	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
