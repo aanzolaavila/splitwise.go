@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,6 +22,7 @@ type HttpClient interface {
 }
 
 type Client struct {
+	Logger         *log.Logger
 	HttpClient     HttpClient
 	BaseUrl        string
 	ApiVersionPath string
@@ -55,6 +57,14 @@ func (c *Client) httpClient() HttpClient {
 	}
 
 	return c.HttpClient
+}
+
+func (c *Client) logger() *log.Logger {
+	if c.Logger == nil {
+		return log.Default()
+	}
+
+	return c.Logger
 }
 
 func (c *Client) addAuthorizationHeader(req *http.Request) {
@@ -123,35 +133,27 @@ func extractErrorsFromMap(m map[string]interface{}) []error {
 	return errs
 }
 
-func handleStatusOkErrorResponse(res *http.Response) error {
+func handleStatusOkErrorResponse(res *http.Response, body []byte) error {
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("error response is not 200")
 	}
 
-	rawBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
+	var rawBody []byte
+	var err error
+	if body == nil {
+		rawBody, err = io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+	} else {
+		rawBody = body
 	}
-	defer res.Body.Close()
 
 	var m map[string]interface{}
 	err = json.Unmarshal(rawBody, &m)
 	if err != nil {
 		return err
-	}
-
-	successValue, ok := m["success"]
-	if !ok {
-		return fmt.Errorf("unknown error status")
-	}
-
-	successStatus, ok := successValue.(bool)
-	if !ok {
-		return fmt.Errorf("unexpected success response: %v", successValue)
-	}
-
-	if successStatus {
-		return nil
 	}
 
 	respErrors := extractErrorsFromMap(m)
@@ -164,7 +166,20 @@ func handleStatusOkErrorResponse(res *http.Response) error {
 		return fmt.Errorf("got multiple errors: %v", respErrors)
 	}
 
-	return fmt.Errorf("unsuccessful but unknown causes")
+	var successStatus bool = true
+	successValue, ok := m["success"]
+	if ok {
+		successStatus, ok = successValue.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected success response: %v", successValue)
+		}
+	}
+
+	if successStatus {
+		return nil
+	} else {
+		return fmt.Errorf("unsuccessful with unknown causes")
+	}
 }
 
 func paramsToJsonBytesReader(params map[string]interface{}) (io.Reader, error) {
@@ -199,6 +214,8 @@ func (c *Client) do(ctx context.Context, method string, path string, queryParams
 	c.addAuthorizationHeader(req)
 
 	req.Header.Add("Content-Type", "application/json")
+
+	c.logger().Printf("%s %s\n", method, endpointUrl.String())
 
 	return c.httpClient().Do(req)
 }

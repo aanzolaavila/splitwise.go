@@ -221,6 +221,7 @@ func expensesExamples(ctx context.Context, client splitwise.Client) {
 	params := splitwise.ExpensesParams{}
 	const monthDuration = 60 * 60 * 24 * 30
 	params[splitwise.ExpensesDatedAfter] = time.Now().Add(-1 * 3 * monthDuration * time.Second)
+	params[splitwise.ExpensesLimit] = 100
 	expenses, err := client.GetExpenses(ctx, params)
 	if err != nil {
 		log.Fatalf("failed to get expenses: %v", err)
@@ -230,4 +231,49 @@ func expensesExamples(ctx context.Context, client splitwise.Client) {
 	for _, e := range expenses {
 		fmt.Printf("Expense #%d [%s]: %s\n", e.ID, e.Date, e.Description)
 	}
+
+	// Query one expense
+	if len(expenses) > 0 {
+		expenseId := expenses[0].ID
+		expense, err := client.GetExpense(ctx, expenseId)
+		if err != nil {
+			log.Fatalf("failed to get expense #%d: %v", expenseId, err)
+		}
+
+		fmt.Printf("Expense #%d: %+v\n", expenseId, expense)
+	}
+
+	// Create expense with Equal group split
+	groups, err := client.GetGroups(ctx)
+	if err != nil {
+		log.Fatalf("could not get groups: %v", err)
+	}
+
+	if len(groups) > 1 {
+		groupId := groups[1].ID
+
+		fmt.Printf("selected group id: %d\n", groupId)
+
+		expenses, err := client.CreateExpenseEqualGroupSplit(ctx, "10000", "should delete", groupId, true, nil)
+		if err != nil {
+			log.Fatalf("could not create expense: %v", err)
+		}
+
+		fmt.Printf("expenses created: %d\n", len(expenses))
+		for _, e := range expenses {
+			fmt.Printf("Expense #%d: %s\n", e.ID, e.Description)
+		}
+
+		// let's delete those test expenses
+		fmt.Printf("deleting created expenses\n")
+		for _, e := range expenses {
+			err := client.DeleteExpense(ctx, e.ID)
+			if err != nil {
+				log.Fatalf("could not delete expense #%d", e.ID)
+			}
+
+			fmt.Printf("expense #%d deleted\n", e.ID)
+		}
+	}
+
 }

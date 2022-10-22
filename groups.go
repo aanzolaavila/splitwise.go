@@ -216,7 +216,7 @@ func (c *Client) AddUserToGroupFromUserId(ctx context.Context, groupId, userId i
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res); err != nil {
+	if err := handleStatusOkErrorResponse(res, nil); err != nil {
 		return err
 	}
 
@@ -241,7 +241,7 @@ func (c *Client) AddUserToGroupFromUserInfo(ctx context.Context, groupId int, fi
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res); err != nil {
+	if err := handleStatusOkErrorResponse(res, nil); err != nil {
 		return err
 	}
 
@@ -264,7 +264,7 @@ func (c *Client) RemoveUserFromGroup(ctx context.Context, groupId, userId int) e
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res); err != nil {
+	if err := handleStatusOkErrorResponse(res, nil); err != nil {
 		return err
 	}
 

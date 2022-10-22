@@ -201,7 +201,7 @@ func (c *Client) DeleteFriend(ctx context.Context, id int) error {
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res); err != nil {
+	if err := handleStatusOkErrorResponse(res, nil); err != nil {
 		return err
 	}
 
