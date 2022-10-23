@@ -327,6 +327,59 @@ func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, descri
 	return container.Expenses, nil
 }
 
+func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, description string, groupId int, params CreateExpenseParams, users []ExpenseUser) ([]resources.ExpenseResponse, error) {
+	const basePath = "/update_expense"
+
+	path := fmt.Sprintf("%s/%d", basePath, id)
+
+	if cost == 0.0 || description == "" {
+		return nil, fmt.Errorf("cost and description must be non-empty")
+	}
+
+	m := make(map[string]interface{})
+	for k, v := range params {
+		m[string(k)] = v
+	}
+
+	m["cost"] = fmt.Sprintf("%.2f", cost)
+	m["description"] = description
+	m["group_id"] = groupId
+
+	for idx, user := range users {
+		err := addExpenseUserParamsToMap(idx, user, m)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := c.do(ctx, http.MethodPost, path, nil, m)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, handleResponseError(res)
+	}
+
+	rawBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if err := handleStatusOkErrorResponse(res, rawBody); err != nil {
+		return nil, err
+	}
+
+	var container expensesContainer
+	err = json.Unmarshal(rawBody, &container)
+	if err != nil {
+		return nil, err
+	}
+
+	return container.Expenses, nil
+}
+
 func (c *Client) DeleteExpense(ctx context.Context, id int) error {
 	const basePath = "/delete_expense"
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aanzolaavila/splitwise.go"
@@ -379,8 +380,6 @@ func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) 
 		splitwise.CreateExpenseRepeatInterval: "weekly",
 	}
 
-	fmt.Printf("Users to include in expense: %+v\n", expUsers)
-
 	expenses, err := client.CreateExpenseByShares(ctx, 10000, "should delete this", group.ID, params, expUsers)
 	if err != nil {
 		log.Fatalf("could not create expenses: %v", err)
@@ -389,6 +388,34 @@ func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) 
 	fmt.Printf("%d expenses created\n", len(expenses))
 	for _, e := range expenses {
 		fmt.Printf("expense #%d - %s\n", e.ID, e.Description)
+	}
+
+	// let's try to update them
+	fmt.Printf("updating created expenses\n")
+	for _, e := range expenses {
+		costValue, err := strconv.ParseFloat(e.Cost, 32)
+		if err != nil {
+			log.Fatalf("failed to convert cost to float: %v", err)
+		}
+
+		params = splitwise.CreateExpenseParams{
+			splitwise.CreateExpenseRepeatInterval: "monthly",
+		}
+
+		updated, err := client.UpdateExpense(ctx, e.ID, costValue, e.Description, int(e.GroupId), params, nil)
+		if err != nil {
+			log.Fatalf("could not update expense #%d", e.ID)
+		}
+
+		fmt.Printf("expense #%d updated\n", e.ID)
+
+		if len(updated) != 1 {
+			log.Fatalf("the number of updated entries should be 1")
+		}
+
+		if updated[0].RepeatInterval != "monthly" {
+			log.Fatalf("expense repeat interval was not updated to \"monthly\"")
+		}
 	}
 
 	// let's delete those test expenses
