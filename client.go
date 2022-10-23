@@ -65,10 +65,12 @@ func (c *Client) logger() *log.Logger {
 	return c.Logger
 }
 
-func (c *Client) addAuthorizationHeader(req *http.Request) {
+func (c *Client) addRequiredHeaders(req *http.Request) {
 	if c.Token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 	}
+
+	req.Header.Add("Content-Type", "application/json")
 }
 
 func paramsToJsonBytesReader(params map[string]interface{}) (io.Reader, error) {
@@ -100,9 +102,7 @@ func (c *Client) do(ctx context.Context, method string, path string, queryParams
 		return nil, err
 	}
 
-	c.addAuthorizationHeader(req)
-
-	req.Header.Add("Content-Type", "application/json")
+	c.addRequiredHeaders(req)
 
 	c.logger().Printf("%s %s\n", method, endpointUrl.String())
 

@@ -568,7 +568,7 @@ func parsedExpenseExamples(ctx context.Context, client splitwise.Client) {
 		users = append(users, u.User.FirstName)
 	}
 
-	fmt.Printf("Parsed expense #%d [valid:%v] - $%s - %s - %v\n",
+	fmt.Printf("Parsed expense #%d [valid: %v] - $%s - %s - %v\n",
 		pexp.Expense.ID, pexp.Valid,
 		pexp.Expense.Cost, pexp.Expense.Description,
 		users,
