@@ -78,6 +78,7 @@ func main() {
 	notificationsExamples(ctx, client)
 	currenciesExamples(ctx, client)
 	categoriesExamples(ctx, client)
+	parsedExpenseExamples(ctx, client)
 }
 
 func userExamples(ctx context.Context, client splitwise.Client) {
@@ -540,4 +541,36 @@ func categoriesExamples(ctx context.Context, client splitwise.Client) {
 			fmt.Printf("Subcategory %d - %s\n", sc.ID, sc.Name)
 		}
 	}
+}
+
+func parsedExpenseExamples(ctx context.Context, client splitwise.Client) {
+	friends, err := client.GetFriends(ctx)
+	if err != nil {
+		log.Fatalf("could not get friends: %v", err)
+	}
+
+	if len(friends) == 0 {
+		log.Printf("no friends to create the expense :(")
+		return
+	}
+
+	friend := friends[0]
+
+	input := fmt.Sprintf("I owe %s %s $5000 COP", friend.FirstName, friend.LastName)
+	fmt.Printf("Input: %s\n", input)
+	pexp, err := client.ParseSentenceIntoExpenseFreeform(ctx, input, false)
+	if err != nil {
+		log.Fatalf("could not parse sentense into expense: %v", err)
+	}
+
+	var users []string
+	for _, u := range pexp.Expense.Users {
+		users = append(users, u.User.FirstName)
+	}
+
+	fmt.Printf("Parsed expense #%d [valid:%v] - $%s - %s - %v\n",
+		pexp.Expense.ID, pexp.Valid,
+		pexp.Expense.Cost, pexp.Expense.Description,
+		users,
+	)
 }
