@@ -11,19 +11,6 @@ type Expense struct {
 	GroupId        uint32 `json:"group_id"`
 }
 
-type ExpenseSplitEqually struct {
-	Expense
-	SplitEqually bool `json:"split_equally"`
-}
-
-type ExpenseByShare struct {
-	Expense
-	PaidUserID uint64 `json:"users__0__user_id"`
-	OwedUserID uint64 `json:"users__1__user_id"`
-	PaidShare  string `json:"users__0__paid_share"`
-	OwedShare  string `json:"users__1__owed_share"`
-}
-
 type ExpenseResponse struct {
 	Entity
 	Expense
@@ -61,14 +48,5 @@ type ExpenseResponse struct {
 		OwedShare  string `json:"owed_share"`
 		NetBalance string `json:"net_balance"`
 	} `json:"users"`
-	Comments []struct {
-		Entity
-		Content      string `json:"content"`
-		CommentType  string `json:"comment_type"`
-		RelationType string `json:"relation_type"`
-		RelationId   uint32 `json:"relation_id"`
-		CreatedAt    string `json:"created_at"`
-		DeletedAt    string `json:"deleted_at"`
-		User         User   `json:"user"`
-	} `json:"comments"`
+	Comments []Comment `json:"comments"`
 }

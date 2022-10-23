@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aanzolaavila/splitwise.go"
+	"github.com/aanzolaavila/splitwise.go/resources"
 	"golang.org/x/oauth2"
 )
 
@@ -73,6 +74,7 @@ func main() {
 	groupExamples(ctx, client)
 	friendsExamples(ctx, client)
 	expensesExamples(ctx, client)
+	commentExamples(ctx, client)
 }
 
 func userExamples(ctx context.Context, client splitwise.Client) {
@@ -427,5 +429,73 @@ func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) 
 		}
 
 		fmt.Printf("expense #%d deleted\n", e.ID)
+	}
+}
+
+func commentExamples(ctx context.Context, client splitwise.Client) {
+	// let's do it inside of a group
+	groups, err := client.GetGroups(ctx)
+	if err != nil {
+		log.Fatalf("could not get groups: %v", err)
+	}
+
+	if len(groups) == 1 {
+		fmt.Printf("only one group (no group = 0), not doing anything\n")
+		return
+	}
+
+	group := groups[0]
+	for i := 1; i < len(groups) && group.ID == 0; i++ {
+		group = groups[i]
+	}
+
+	fmt.Printf("selected group: #%d - %s\n", group.ID, group.Name)
+
+	expenses, err := client.CreateExpenseEqualGroupSplit(ctx, 5000, "should delete - comments example", group.ID, nil)
+	if err != nil {
+		log.Fatalf("could not create expense for comments: %v", err)
+	}
+
+	defer func(ctx context.Context, client splitwise.Client, expenses []resources.ExpenseResponse) {
+		for _, e := range expenses {
+			_ = client.DeleteExpense(ctx, e.ID)
+		}
+	}(ctx, client, expenses)
+
+	if len(expenses) != 1 {
+		log.Fatalf("created expenses should be only 1")
+	}
+
+	expense := expenses[0]
+
+	commentId := createCommentsExample(ctx, client, expense.ID)
+	defer func(ctx context.Context, client splitwise.Client, id int) {
+		_, err := client.DeleteExpenseComment(ctx, id)
+		if err != nil {
+			log.Printf("could not delete comment #%d\n", id)
+		}
+	}(ctx, client, commentId)
+
+	queryCommentsExample(ctx, client, expense.ID)
+}
+
+func createCommentsExample(ctx context.Context, client splitwise.Client, expenseId int) int {
+	comment, err := client.CreateExpenseComment(ctx, expenseId, "should delete this comment")
+	if err != nil {
+		log.Fatalf("could not create comment: %v", err)
+	}
+
+	return comment.ID
+}
+
+func queryCommentsExample(ctx context.Context, client splitwise.Client, expenseId int) {
+	comments, err := client.GetExpenseComments(ctx, expenseId)
+	if err != nil {
+		log.Fatalf("could not query comments: %v", err)
+	}
+
+	fmt.Printf("Comments\n")
+	for _, c := range comments {
+		fmt.Printf("Comment #%d: %s\n", c.ID, c.Content)
 	}
 }
