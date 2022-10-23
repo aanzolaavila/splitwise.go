@@ -218,6 +218,12 @@ func friendsExamples(ctx context.Context, client splitwise.Client) {
 }
 
 func expensesExamples(ctx context.Context, client splitwise.Client) {
+	getExpensesExample(ctx, client)
+	createExpenseEqualGroupSplitExample(ctx, client)
+	createExpenseBySharesExample(ctx, client)
+}
+
+func getExpensesExample(ctx context.Context, client splitwise.Client) {
 	params := splitwise.ExpensesParams{}
 	const monthDuration = 60 * 60 * 24 * 30
 	params[splitwise.ExpensesDatedAfter] = time.Now().Add(-1 * 3 * monthDuration * time.Second)
@@ -242,60 +248,157 @@ func expensesExamples(ctx context.Context, client splitwise.Client) {
 
 		fmt.Printf("Expense #%d: %+v\n", expenseId, expense)
 	}
+}
 
+func createExpenseEqualGroupSplitExample(ctx context.Context, client splitwise.Client) {
 	// Create expense with Equal group split
 	groups, err := client.GetGroups(ctx)
 	if err != nil {
 		log.Fatalf("could not get groups: %v", err)
 	}
 
-	if len(groups) > 1 {
-		groupId := groups[1].ID
+	if len(groups) == 1 {
+		fmt.Printf("only one group (no group = 0), not doing anything\n")
+		return
+	}
 
-		fmt.Printf("selected group id: %d\n", groupId)
+	groupId := groups[0].ID
+	groupName := groups[0].Name
+	for i := 1; i < len(groups) && groupId == 0; i++ {
+		groupId = groups[i].ID
+		groupName = groups[i].Name
+	}
 
-		expenses, err := client.CreateExpenseEqualGroupSplit(ctx, "10000", "should delete", groupId, true, nil)
+	fmt.Printf("selected group: #%d - %s\n", groupId, groupName)
+
+	// ---
+
+	newExpenses, err := client.CreateExpenseEqualGroupSplit(ctx, 10000, "should delete", groupId, nil)
+	if err != nil {
+		log.Fatalf("could not create expense: %v", err)
+	}
+
+	fmt.Printf("expenses created: %d\n", len(newExpenses))
+	for _, e := range newExpenses {
+		fmt.Printf("Expense #%d: %s\n", e.ID, e.Description)
+	}
+
+	// let's delete those test expenses
+	fmt.Printf("deleting created expenses\n")
+	for _, e := range newExpenses {
+		err := client.DeleteExpense(ctx, e.ID)
 		if err != nil {
-			log.Fatalf("could not create expense: %v", err)
+			log.Fatalf("could not delete expense #%d", e.ID)
 		}
 
-		fmt.Printf("expenses created: %d\n", len(expenses))
-		for _, e := range expenses {
-			fmt.Printf("Expense #%d: %s\n", e.ID, e.Description)
+		fmt.Printf("expense #%d deleted\n", e.ID)
+	}
+
+	// let's restore them
+	fmt.Printf("restoring deleted expenses\n")
+	for _, e := range newExpenses {
+		err := client.RestoreExpense(ctx, e.ID)
+		if err != nil {
+			log.Fatalf("could not undelete expense #%d", e.ID)
 		}
 
-		// let's delete those test expenses
-		fmt.Printf("deleting created expenses\n")
-		for _, e := range expenses {
-			err := client.DeleteExpense(ctx, e.ID)
-			if err != nil {
-				log.Fatalf("could not delete expense #%d", e.ID)
-			}
+		fmt.Printf("expense #%d restored\n", e.ID)
+	}
 
-			fmt.Printf("expense #%d deleted\n", e.ID)
+	// let's delete those test expenses again
+	fmt.Printf("deleting restored expenses\n")
+	for _, e := range newExpenses {
+		err := client.DeleteExpense(ctx, e.ID)
+		if err != nil {
+			log.Fatalf("could not delete expense #%d", e.ID)
 		}
 
-		// let's restore them
-		fmt.Printf("restoring deleted expenses\n")
-		for _, e := range expenses {
-			err := client.RestoreExpense(ctx, e.ID)
-			if err != nil {
-				log.Fatalf("could not undelete expense #%d", e.ID)
-			}
+		fmt.Printf("expense #%d deleted again\n", e.ID)
+	}
+}
 
-			fmt.Printf("expense #%d restored\n", e.ID)
-		}
+func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) {
+	// let's do it inside of a group
+	groups, err := client.GetGroups(ctx)
+	if err != nil {
+		log.Fatalf("could not get groups: %v", err)
+	}
 
-		// let's delete those test expenses again
-		fmt.Printf("deleting restored expenses\n")
-		for _, e := range expenses {
-			err := client.DeleteExpense(ctx, e.ID)
-			if err != nil {
-				log.Fatalf("could not delete expense #%d", e.ID)
-			}
+	if len(groups) == 1 {
+		fmt.Printf("only one group (no group = 0), not doing anything\n")
+		return
+	}
 
-			fmt.Printf("expense #%d deleted again\n", e.ID)
+	group := groups[0]
+	for i := 1; i < len(groups) && group.ID == 0; i++ {
+		group = groups[i]
+	}
+
+	fmt.Printf("selected group: #%d - %s\n", group.ID, group.Name)
+
+	// let's see what users are inside the group
+	users := group.Members
+
+	// let's only do it for 2 users that are inside the group
+	if len(users) < 3 {
+		log.Printf("there are not enough users [%d users]\n", len(users))
+		return
+	}
+
+	currentUser, err := client.GetCurrentUser(ctx)
+	if err != nil {
+		log.Fatalf("could not get current user: %v", err)
+	}
+
+	// all users but the current user
+	for i, u := range users {
+		if u.ID == currentUser.ID {
+			users = append(users[:i], users[i+1:]...)
+			break
 		}
 	}
 
+	users = users[:2]
+	expUsers := []splitwise.ExpenseUser{}
+	for _, user := range users {
+		e := splitwise.ExpenseUser{
+			Id:        user.ID,
+			PaidShare: 0.0,
+			OwedShare: 5000.0,
+		}
+		expUsers = append(expUsers, e)
+	}
+
+	expUsers = append(expUsers, splitwise.ExpenseUser{
+		Id:        currentUser.ID,
+		PaidShare: 10000.0,
+		OwedShare: 0.0,
+	})
+
+	params := splitwise.CreateExpenseParams{
+		splitwise.CreateExpenseRepeatInterval: "weekly",
+	}
+
+	fmt.Printf("Users to include in expense: %+v\n", expUsers)
+
+	expenses, err := client.CreateExpenseByShares(ctx, 10000, "should delete this", group.ID, params, expUsers)
+	if err != nil {
+		log.Fatalf("could not create expenses: %v", err)
+	}
+
+	fmt.Printf("%d expenses created\n", len(expenses))
+	for _, e := range expenses {
+		fmt.Printf("expense #%d - %s\n", e.ID, e.Description)
+	}
+
+	// let's delete those test expenses
+	fmt.Printf("deleting created expenses\n")
+	for _, e := range expenses {
+		err := client.DeleteExpense(ctx, e.ID)
+		if err != nil {
+			log.Fatalf("could not delete expense #%d", e.ID)
+		}
+
+		fmt.Printf("expense #%d deleted\n", e.ID)
+	}
 }

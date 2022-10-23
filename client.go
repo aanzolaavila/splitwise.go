@@ -119,13 +119,35 @@ func extractErrorsFromMap(m map[string]interface{}) []error {
 		return nil
 	}
 
-	errsArray, ok := errsValue.([]string)
+	errsArray, ok := errsValue.([]interface{})
 	if !ok {
-		return nil
+		baseValue, ok := errsValue.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+
+		base, ok := baseValue["base"]
+		if !ok {
+			return nil
+		}
+
+		errsArray, ok = base.([]interface{})
+		if !ok {
+			return nil
+		}
+
+	}
+
+	var strSlice []string
+	for _, e := range errsArray {
+		err, ok := e.(string)
+		if ok {
+			strSlice = append(strSlice, err)
+		}
 	}
 
 	var errs []error
-	for _, errStr := range errsArray {
+	for _, errStr := range strSlice {
 		err := errors.New(errStr)
 		errs = append(errs, err)
 	}
@@ -159,11 +181,11 @@ func handleStatusOkErrorResponse(res *http.Response, body []byte) error {
 	respErrors := extractErrorsFromMap(m)
 
 	if len(respErrors) == 1 {
-		return fmt.Errorf("%v", respErrors[0])
+		return fmt.Errorf("%w", respErrors[0])
 	}
 
 	if len(respErrors) > 1 {
-		return fmt.Errorf("got multiple errors: %v", respErrors)
+		return fmt.Errorf("got multiple errors: %+v", respErrors)
 	}
 
 	var successStatus bool = true

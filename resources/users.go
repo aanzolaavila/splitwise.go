@@ -13,6 +13,7 @@ type User struct {
 		Medium string `json:"medium"`
 		Large  string `json:"large"`
 	} `json:"picture"`
+	CustomPicture      bool      `json:"custom_picture"`
 	NotificationsRead  time.Time `json:"notifications_read"`
 	NotificationsCount int       `json:"notifications_count"`
 	Notifications      struct {
@@ -20,4 +21,8 @@ type User struct {
 	} `json:"notifications"`
 	DefaultCurrency string `json:"default_currency"`
 	Locale          string `json:"locale"`
+	Balance         []struct {
+		Amount       string `json:"amount"`
+		CurrencyCode string `json:"currency_code"`
+	} `json:"balance"`
 }

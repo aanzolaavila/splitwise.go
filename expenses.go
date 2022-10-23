@@ -41,7 +41,7 @@ func getAndCheckIntExpensesParam(params ExpensesParams, key expensesParam) (stri
 		strValue, ok := value.(string)
 		if ok {
 			if _, err := strconv.Atoi(strValue); err != nil {
-				return "", fmt.Errorf("%s is not convertable to int: %v", key, err)
+				return "", fmt.Errorf("%s is not convertable to int: %w", key, err)
 			}
 			return strValue, nil
 		}
@@ -182,10 +182,10 @@ const (
 	CreateExpenseCategoryId     createExpenseParam = "category_id"
 )
 
-func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost, description string, groupId int, splitEqually bool, params CreateExpenseParams) ([]resources.ExpenseResponse, error) {
+func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64, description string, groupId int, params CreateExpenseParams) ([]resources.ExpenseResponse, error) {
 	const basePath = "/create_expense"
 
-	if cost == "" || description == "" {
+	if cost == 0.0 || description == "" {
 		return nil, fmt.Errorf("cost and description must be non-empty")
 	}
 
@@ -194,10 +194,10 @@ func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost, descrip
 		m[string(k)] = v
 	}
 
-	m["cost"] = cost
+	m["cost"] = fmt.Sprintf("%.2f", cost)
 	m["description"] = description
 	m["group_id"] = groupId
-	m["split_equally"] = splitEqually
+	m["split_equally"] = true
 
 	res, err := c.do(ctx, http.MethodPost, basePath, nil, m)
 	if err != nil {
@@ -212,8 +212,108 @@ func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost, descrip
 	if err != nil {
 		return nil, err
 	}
-
 	defer res.Body.Close()
+
+	if err := handleStatusOkErrorResponse(res, rawBody); err != nil {
+		return nil, err
+	}
+
+	var container expensesContainer
+	err = json.Unmarshal(rawBody, &container)
+	if err != nil {
+		return nil, err
+	}
+
+	return container.Expenses, nil
+}
+
+type ExpenseUser struct {
+	Id        int
+	Email     string
+	Firstname string
+	Lastname  string
+	PaidShare float64
+	OwedShare float64
+}
+
+func addExpenseUserParamsToMap(idx int, u ExpenseUser, m map[string]interface{}) error {
+	const format = "users__%d__%s"
+
+	if u.Id == 0 && u.Email == "" {
+		return fmt.Errorf("id or email is required for the user: %+v", u)
+	}
+
+	if v := strconv.Itoa(u.Id); u.Id != 0 {
+		k := fmt.Sprintf(format, idx, "user_id")
+		m[k] = v
+	}
+
+	if v := u.Email; v != "" {
+		k := fmt.Sprintf(format, idx, "email")
+		m[k] = v
+	}
+
+	if v := u.Firstname; v != "" {
+		k := fmt.Sprintf(format, idx, "first_name")
+		m[k] = v
+	}
+
+	if v := u.Lastname; v != "" {
+		k := fmt.Sprintf(format, idx, "last_name")
+		m[k] = v
+	}
+
+	if v := u.PaidShare; true {
+		k := fmt.Sprintf(format, idx, "paid_share")
+		m[k] = fmt.Sprintf("%.2f", v)
+	}
+
+	if v := u.OwedShare; true {
+		k := fmt.Sprintf(format, idx, "owed_share")
+		m[k] = fmt.Sprintf("%.2f", v)
+	}
+
+	return nil
+}
+
+func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, description string, groupId int, params CreateExpenseParams, users []ExpenseUser) ([]resources.ExpenseResponse, error) {
+	const basePath = "/create_expense"
+
+	if cost == 0.0 || description == "" {
+		return nil, fmt.Errorf("cost and description must be non-empty")
+	}
+
+	m := make(map[string]interface{})
+	for k, v := range params {
+		m[string(k)] = v
+	}
+
+	m["cost"] = fmt.Sprintf("%.2f", cost)
+	m["description"] = description
+	m["group_id"] = groupId
+
+	for idx, user := range users {
+		err := addExpenseUserParamsToMap(idx, user, m)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := c.do(ctx, http.MethodPost, basePath, nil, m)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, handleResponseError(res)
+	}
+
+	rawBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
 	if err := handleStatusOkErrorResponse(res, rawBody); err != nil {
 		return nil, err
 	}
