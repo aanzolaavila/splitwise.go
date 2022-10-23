@@ -76,6 +76,7 @@ func main() {
 	expensesExamples(ctx, client)
 	commentExamples(ctx, client)
 	notificationsExamples(ctx, client)
+	currenciesExamples(ctx, client)
 }
 
 func userExamples(ctx context.Context, client splitwise.Client) {
@@ -510,5 +511,17 @@ func notificationsExamples(ctx context.Context, client splitwise.Client) {
 	fmt.Printf("Notifications\n")
 	for _, n := range ns {
 		fmt.Printf("Notification #%d: %s\n", n.ID, n.Content)
+	}
+}
+
+func currenciesExamples(ctx context.Context, client splitwise.Client) {
+	currs, err := client.GetCurrencies(ctx)
+	if err != nil {
+		log.Fatalf("could not get currencies: %v", err)
+	}
+
+	fmt.Printf("Currencies\n")
+	for _, c := range currs {
+		fmt.Printf("Currency %s - %s\n", c.CurrencyCode, c.Unit)
 	}
 }
