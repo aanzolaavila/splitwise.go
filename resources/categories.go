@@ -1,9 +1,11 @@
 package resources
 
+type CategoryID Identifier
+
 type Category struct {
-	Entity
-	Name      string `json:"name"`
-	Icon      string `json:"icon"`
+	ID        CategoryID `json:"id"`
+	Name      string     `json:"name"`
+	Icon      string     `json:"icon"`
 	IconTypes struct {
 		Slim struct {
 			Small string `json:"small"`

@@ -2,8 +2,10 @@ package resources
 
 import "time"
 
+type UserID Identifier
+
 type User struct {
-	Entity
+	ID                 UserID `json:"id"`
 	FirstName          string `json:"first_name"`
 	LastName           string `json:"last_name"`
 	Email              string `json:"email"`

@@ -2,8 +2,10 @@ package resources
 
 import "time"
 
+type GroupID Identifier
+
 type Group struct {
-	Entity
+	ID                GroupID   `json:"id"`
 	Name              string    `json:"name"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`

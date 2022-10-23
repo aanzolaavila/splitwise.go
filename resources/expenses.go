@@ -1,6 +1,8 @@
 package resources
 
-type Expense struct {
+type ExpenseID Identifier
+
+type ExpenseBase struct {
 	Cost           string `json:"cost"`
 	Description    string `json:"description"`
 	Details        string `json:"details"`
@@ -11,31 +13,31 @@ type Expense struct {
 	GroupId        uint32 `json:"group_id"`
 }
 
-type ExpenseResponse struct {
-	Entity
-	Expense
-	FriendshipID           uint64 `json:"friendship_id"`
-	Repeats                bool   `json:"repeats"`
-	EmailReminder          bool   `json:"email_reminder"`
-	EmailReminderInAdvance int8   `json:"email_reminder_in_advance"`
-	NextRepeat             string `json:"next_repeat"`
-	CommentsCount          uint   `json:"comments_count"`
-	Payment                bool   `json:"payment"`
-	TransactionConfirmed   bool   `json:"transaction_confirmed"`
-	CreatedAt              string `json:"created_at"`
-	CreatedBy              User   `json:"created_by"`
-	UpdatedAt              string `json:"updated_at"`
-	UpdatedBy              User   `json:"updated_by"`
-	DeletedAt              string `json:"deleted_at"`
-	DeletedBy              User   `json:"deleted_by"`
+type Expense struct {
+	ExpenseBase
+	ID                     ExpenseID `json:"id"`
+	FriendshipID           uint64    `json:"friendship_id"`
+	Repeats                bool      `json:"repeats"`
+	EmailReminder          bool      `json:"email_reminder"`
+	EmailReminderInAdvance int8      `json:"email_reminder_in_advance"`
+	NextRepeat             string    `json:"next_repeat"`
+	CommentsCount          uint      `json:"comments_count"`
+	Payment                bool      `json:"payment"`
+	TransactionConfirmed   bool      `json:"transaction_confirmed"`
+	CreatedAt              string    `json:"created_at"`
+	CreatedBy              User      `json:"created_by"`
+	UpdatedAt              string    `json:"updated_at"`
+	UpdatedBy              User      `json:"updated_by"`
+	DeletedAt              string    `json:"deleted_at"`
+	DeletedBy              User      `json:"deleted_by"`
 	Repayments             []struct {
 		From   uint32 `json:"from"`
 		To     uint32 `json:"to"`
 		Amount string `json:"amount"`
 	} `json:"repayments"`
 	Category struct {
-		Entity
-		Name string `json:"Name"`
+		ID   CategoryID `json:"id"`
+		Name string     `json:"Name"`
 	} `json:"category"`
 	Receipt struct {
 		Large    string `json:"large"`

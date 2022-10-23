@@ -89,7 +89,7 @@ func userExamples(ctx context.Context, client splitwise.Client) {
 
 	userId := user.ID
 
-	user, err = client.GetUser(ctx, userId)
+	user, err = client.GetUser(ctx, int(userId))
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -99,7 +99,7 @@ func userExamples(ctx context.Context, client splitwise.Client) {
 	params := splitwise.UserParams{}
 	originalName := user.FirstName
 	params[splitwise.UserFirstname] = "Alexander"
-	user, err = client.UpdateUser(ctx, userId, params)
+	user, err = client.UpdateUser(ctx, int(userId), params)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -108,7 +108,7 @@ func userExamples(ctx context.Context, client splitwise.Client) {
 
 	params = splitwise.UserParams{}
 	params["first_name"] = originalName
-	user, err = client.UpdateUser(ctx, userId, params)
+	user, err = client.UpdateUser(ctx, int(userId), params)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -158,7 +158,7 @@ func groupExamples(ctx context.Context, client splitwise.Client) {
 	fmt.Printf("Group Id %d, Name: %s\n", group.ID, group.Name)
 
 	// let's delete it as well
-	err = client.DeleteGroup(ctx, group.ID)
+	err = client.DeleteGroup(ctx, int(group.ID))
 	if err != nil {
 		log.Fatalf("error deleting group: %v", err)
 	}
@@ -166,7 +166,7 @@ func groupExamples(ctx context.Context, client splitwise.Client) {
 	fmt.Println("group deleted")
 
 	// let's try to undelete it
-	err = client.RestoreGroup(ctx, group.ID)
+	err = client.RestoreGroup(ctx, int(group.ID))
 	if err != nil {
 		log.Fatalf("error restoring group: %v", err)
 	}
@@ -174,7 +174,7 @@ func groupExamples(ctx context.Context, client splitwise.Client) {
 	fmt.Println("group restored")
 
 	// let's delete it again
-	err = client.DeleteGroup(ctx, group.ID)
+	err = client.DeleteGroup(ctx, int(group.ID))
 	if err != nil {
 		log.Fatalf("error deleting group: %v", err)
 	}
@@ -195,7 +195,7 @@ func friendsExamples(ctx context.Context, client splitwise.Client) {
 
 	if len(friends) > 0 {
 		id := friends[0].ID
-		friend, err := client.GetFriend(ctx, id)
+		friend, err := client.GetFriend(ctx, int(id))
 		if err != nil {
 			log.Fatalf("error getting friend #%d: %v", id, err)
 		}
@@ -216,7 +216,7 @@ func friendsExamples(ctx context.Context, client splitwise.Client) {
 	fmt.Printf("created friend: %+v\n", friend)
 
 	friendId := friend.ID
-	err = client.DeleteFriend(ctx, friendId)
+	err = client.DeleteFriend(ctx, int(friendId))
 	if err != nil {
 		log.Fatalf("failed to delete friend: %d", friendId)
 	}
@@ -248,7 +248,7 @@ func getExpensesExample(ctx context.Context, client splitwise.Client) {
 	// Query one expense
 	if len(expenses) > 0 {
 		expenseId := expenses[0].ID
-		expense, err := client.GetExpense(ctx, expenseId)
+		expense, err := client.GetExpense(ctx, int(expenseId))
 		if err != nil {
 			log.Fatalf("failed to get expense #%d: %v", expenseId, err)
 		}
@@ -280,7 +280,7 @@ func createExpenseEqualGroupSplitExample(ctx context.Context, client splitwise.C
 
 	// ---
 
-	newExpenses, err := client.CreateExpenseEqualGroupSplit(ctx, 10000, "should delete", groupId, nil)
+	newExpenses, err := client.CreateExpenseEqualGroupSplit(ctx, 10000, "should delete", int(groupId), nil)
 	if err != nil {
 		log.Fatalf("could not create expense: %v", err)
 	}
@@ -293,7 +293,7 @@ func createExpenseEqualGroupSplitExample(ctx context.Context, client splitwise.C
 	// let's delete those test expenses
 	fmt.Printf("deleting created expenses\n")
 	for _, e := range newExpenses {
-		err := client.DeleteExpense(ctx, e.ID)
+		err := client.DeleteExpense(ctx, int(e.ID))
 		if err != nil {
 			log.Fatalf("could not delete expense #%d", e.ID)
 		}
@@ -304,7 +304,7 @@ func createExpenseEqualGroupSplitExample(ctx context.Context, client splitwise.C
 	// let's restore them
 	fmt.Printf("restoring deleted expenses\n")
 	for _, e := range newExpenses {
-		err := client.RestoreExpense(ctx, e.ID)
+		err := client.RestoreExpense(ctx, int(e.ID))
 		if err != nil {
 			log.Fatalf("could not undelete expense #%d", e.ID)
 		}
@@ -315,7 +315,7 @@ func createExpenseEqualGroupSplitExample(ctx context.Context, client splitwise.C
 	// let's delete those test expenses again
 	fmt.Printf("deleting restored expenses\n")
 	for _, e := range newExpenses {
-		err := client.DeleteExpense(ctx, e.ID)
+		err := client.DeleteExpense(ctx, int(e.ID))
 		if err != nil {
 			log.Fatalf("could not delete expense #%d", e.ID)
 		}
@@ -386,7 +386,7 @@ func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) 
 		splitwise.CreateExpenseRepeatInterval: "weekly",
 	}
 
-	expenses, err := client.CreateExpenseByShares(ctx, 10000, "should delete this", group.ID, params, expUsers)
+	expenses, err := client.CreateExpenseByShares(ctx, 10000, "should delete this", int(group.ID), params, expUsers)
 	if err != nil {
 		log.Fatalf("could not create expenses: %v", err)
 	}
@@ -408,7 +408,7 @@ func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) 
 			splitwise.CreateExpenseRepeatInterval: "monthly",
 		}
 
-		updated, err := client.UpdateExpense(ctx, e.ID, costValue, e.Description, int(e.GroupId), params, nil)
+		updated, err := client.UpdateExpense(ctx, int(e.ID), costValue, e.Description, int(e.GroupId), params, nil)
 		if err != nil {
 			log.Fatalf("could not update expense #%d", e.ID)
 		}
@@ -427,7 +427,7 @@ func createExpenseBySharesExample(ctx context.Context, client splitwise.Client) 
 	// let's delete those test expenses
 	fmt.Printf("deleting created expenses\n")
 	for _, e := range expenses {
-		err := client.DeleteExpense(ctx, e.ID)
+		err := client.DeleteExpense(ctx, int(e.ID))
 		if err != nil {
 			log.Fatalf("could not delete expense #%d", e.ID)
 		}
@@ -455,14 +455,14 @@ func commentExamples(ctx context.Context, client splitwise.Client) {
 
 	fmt.Printf("selected group: #%d - %s\n", group.ID, group.Name)
 
-	expenses, err := client.CreateExpenseEqualGroupSplit(ctx, 5000, "should delete - comments example", group.ID, nil)
+	expenses, err := client.CreateExpenseEqualGroupSplit(ctx, 5000, "should delete - comments example", int(group.ID), nil)
 	if err != nil {
 		log.Fatalf("could not create expense for comments: %v", err)
 	}
 
-	defer func(ctx context.Context, client splitwise.Client, expenses []resources.ExpenseResponse) {
+	defer func(ctx context.Context, client splitwise.Client, expenses []resources.Expense) {
 		for _, e := range expenses {
-			_ = client.DeleteExpense(ctx, e.ID)
+			_ = client.DeleteExpense(ctx, int(e.ID))
 		}
 	}(ctx, client, expenses)
 
@@ -472,7 +472,7 @@ func commentExamples(ctx context.Context, client splitwise.Client) {
 
 	expense := expenses[0]
 
-	commentId := createCommentsExample(ctx, client, expense.ID)
+	commentId := createCommentsExample(ctx, client, int(expense.ID))
 	defer func(ctx context.Context, client splitwise.Client, id int) {
 		_, err := client.DeleteExpenseComment(ctx, id)
 		if err != nil {
@@ -480,7 +480,7 @@ func commentExamples(ctx context.Context, client splitwise.Client) {
 		}
 	}(ctx, client, commentId)
 
-	queryCommentsExample(ctx, client, expense.ID)
+	queryCommentsExample(ctx, client, int(expense.ID))
 }
 
 func createCommentsExample(ctx context.Context, client splitwise.Client, expenseId int) int {
@@ -489,7 +489,7 @@ func createCommentsExample(ctx context.Context, client splitwise.Client, expense
 		log.Fatalf("could not create comment: %v", err)
 	}
 
-	return comment.ID
+	return int(comment.ID)
 }
 
 func queryCommentsExample(ctx context.Context, client splitwise.Client, expenseId int) {

@@ -2,12 +2,14 @@ package resources
 
 import "time"
 
+type FriendID Identifier
+
 type Friend struct {
-	Entity
-	FirstName          string `json:"first_name"`
-	LastName           string `json:"last_name"`
-	Email              string `json:"email"`
-	RegistrationStatus string `json:"registration_status"`
+	ID                 FriendID `json:"id"`
+	FirstName          string   `json:"first_name"`
+	LastName           string   `json:"last_name"`
+	Email              string   `json:"email"`
+	RegistrationStatus string   `json:"registration_status"`
 	Picture            struct {
 		Small  string `json:"small"`
 		Medium string `json:"medium"`

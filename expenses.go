@@ -14,11 +14,11 @@ import (
 )
 
 type expensesContainer struct {
-	Expenses []resources.ExpenseResponse `json:"expenses"`
+	Expenses []resources.Expense `json:"expenses"`
 }
 
 type expenseContainer struct {
-	Expense resources.ExpenseResponse `json:"expense"`
+	Expense resources.Expense `json:"expense"`
 }
 
 type expensesParam string
@@ -110,7 +110,7 @@ func expensesParamsToUrlValues(params ExpensesParams) (url.Values, error) {
 	return values, nil
 }
 
-func (c *Client) GetExpenses(ctx context.Context, params ExpensesParams) ([]resources.ExpenseResponse, error) {
+func (c *Client) GetExpenses(ctx context.Context, params ExpensesParams) ([]resources.Expense, error) {
 	const basePath = "/get_expenses"
 
 	expensesValues, err := expensesParamsToUrlValues(params)
@@ -142,30 +142,30 @@ func (c *Client) GetExpenses(ctx context.Context, params ExpensesParams) ([]reso
 	return container.Expenses, nil
 }
 
-func (c *Client) GetExpense(ctx context.Context, id int) (resources.ExpenseResponse, error) {
+func (c *Client) GetExpense(ctx context.Context, id int) (resources.Expense, error) {
 	const basePath = "/get_expense"
 
 	path := fmt.Sprintf("%s/%d", basePath, id)
 
 	res, err := c.do(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
-		return resources.ExpenseResponse{}, err
+		return resources.Expense{}, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return resources.ExpenseResponse{}, handleResponseError(res)
+		return resources.Expense{}, handleResponseError(res)
 	}
 
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return resources.ExpenseResponse{}, err
+		return resources.Expense{}, err
 	}
 	defer res.Body.Close()
 
 	var container expenseContainer
 	err = json.Unmarshal(rawBody, &container)
 	if err != nil {
-		return resources.ExpenseResponse{}, err
+		return resources.Expense{}, err
 	}
 
 	return container.Expense, nil
@@ -182,7 +182,7 @@ const (
 	CreateExpenseCategoryId     createExpenseParam = "category_id"
 )
 
-func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64, description string, groupId int, params CreateExpenseParams) ([]resources.ExpenseResponse, error) {
+func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64, description string, groupId int, params CreateExpenseParams) ([]resources.Expense, error) {
 	const basePath = "/create_expense"
 
 	if cost == 0.0 || description == "" {
@@ -228,7 +228,7 @@ func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64,
 }
 
 type ExpenseUser struct {
-	Id        int
+	Id        resources.UserID
 	Email     string
 	Firstname string
 	Lastname  string
@@ -243,7 +243,7 @@ func addExpenseUserParamsToMap(idx int, u ExpenseUser, m map[string]interface{})
 		return fmt.Errorf("id or email is required for the user: %+v", u)
 	}
 
-	if v := strconv.Itoa(u.Id); u.Id != 0 {
+	if v := strconv.Itoa(int(u.Id)); u.Id != 0 {
 		k := fmt.Sprintf(format, idx, "user_id")
 		m[k] = v
 	}
@@ -276,7 +276,7 @@ func addExpenseUserParamsToMap(idx int, u ExpenseUser, m map[string]interface{})
 	return nil
 }
 
-func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, description string, groupId int, params CreateExpenseParams, users []ExpenseUser) ([]resources.ExpenseResponse, error) {
+func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, description string, groupId int, params CreateExpenseParams, users []ExpenseUser) ([]resources.Expense, error) {
 	const basePath = "/create_expense"
 
 	if cost == 0.0 || description == "" {
@@ -327,7 +327,7 @@ func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, descri
 	return container.Expenses, nil
 }
 
-func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, description string, groupId int, params CreateExpenseParams, users []ExpenseUser) ([]resources.ExpenseResponse, error) {
+func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, description string, groupId int, params CreateExpenseParams, users []ExpenseUser) ([]resources.Expense, error) {
 	const basePath = "/update_expense"
 
 	path := fmt.Sprintf("%s/%d", basePath, id)

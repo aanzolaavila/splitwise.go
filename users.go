@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/aanzolaavila/splitwise.go/resources"
 )
@@ -18,7 +17,7 @@ type userContainer struct {
 func (c *Client) GetCurrentUser(ctx context.Context) (resources.User, error) {
 	const path = "/get_current_user"
 
-	res, err := c.do(ctx, http.MethodGet, path, url.Values{}, nil)
+	res, err := c.do(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
 		return resources.User{}, err
 	}
@@ -47,7 +46,7 @@ func (c *Client) GetUser(ctx context.Context, id int) (resources.User, error) {
 
 	path := fmt.Sprintf("%s/%d", basePath, id)
 
-	res, err := c.do(ctx, http.MethodGet, path, url.Values{}, nil)
+	res, err := c.do(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
 		return resources.User{}, err
 	}
@@ -93,7 +92,7 @@ func (c *Client) UpdateUser(ctx context.Context, id int, params UserParams) (res
 		p[string(k)] = v
 	}
 
-	res, err := c.do(ctx, http.MethodPost, path, url.Values{}, p)
+	res, err := c.do(ctx, http.MethodPost, path, nil, p)
 	if err != nil {
 		return resources.User{}, err
 	}

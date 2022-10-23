@@ -23,7 +23,7 @@ type groupContainer struct {
 func (c *Client) GetGroups(ctx context.Context) ([]resources.Group, error) {
 	const path = "/get_groups"
 
-	res, err := c.do(ctx, http.MethodGet, path, url.Values{}, nil)
+	res, err := c.do(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ const (
 )
 
 type GroupUser struct {
-	Id        int
+	Id        resources.UserID
 	Email     string
 	Firstname string
 	Lastname  string
@@ -98,7 +98,7 @@ func addGroupUserParamsToMap(idx int, u GroupUser, m map[string]interface{}) err
 		return fmt.Errorf("id or email is required for the user: %+v", u)
 	}
 
-	if v := strconv.Itoa(u.Id); u.Id != 0 {
+	if v := strconv.Itoa(int(u.Id)); u.Id != 0 {
 		k := fmt.Sprintf(format, idx, "id")
 		m[k] = v
 	}
