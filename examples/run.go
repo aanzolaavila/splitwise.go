@@ -75,6 +75,7 @@ func main() {
 	friendsExamples(ctx, client)
 	expensesExamples(ctx, client)
 	commentExamples(ctx, client)
+	notificationsExamples(ctx, client)
 }
 
 func userExamples(ctx context.Context, client splitwise.Client) {
@@ -472,7 +473,7 @@ func commentExamples(ctx context.Context, client splitwise.Client) {
 	defer func(ctx context.Context, client splitwise.Client, id int) {
 		_, err := client.DeleteExpenseComment(ctx, id)
 		if err != nil {
-			log.Printf("could not delete comment #%d\n", id)
+			log.Printf("could not delete comment #%d: %v\n", id, err)
 		}
 	}(ctx, client, commentId)
 
@@ -497,5 +498,17 @@ func queryCommentsExample(ctx context.Context, client splitwise.Client, expenseI
 	fmt.Printf("Comments\n")
 	for _, c := range comments {
 		fmt.Printf("Comment #%d: %s\n", c.ID, c.Content)
+	}
+}
+
+func notificationsExamples(ctx context.Context, client splitwise.Client) {
+	ns, err := client.GetNotifications(ctx, nil)
+	if err != nil {
+		log.Fatalf("could not get notifications: %v", err)
+	}
+
+	fmt.Printf("Notifications\n")
+	for _, n := range ns {
+		fmt.Printf("Notification #%d: %s\n", n.ID, n.Content)
 	}
 }
