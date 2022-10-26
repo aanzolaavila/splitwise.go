@@ -21,15 +21,15 @@ func (c *Client) GetCurrencies(ctx context.Context) ([]resources.Currency, error
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return nil, err
+	}
 
 	var container currenciesContainer
 	err = json.Unmarshal(rawBody, &container)

@@ -42,140 +42,93 @@ func (e SplitwiseError) Is(target error) bool {
 
 const (
 	// Splitwise responds 200s on some erroneous requests
-	ErrUnsuccessful = SplitwiseError(200)
-	ErrBadRequest   = SplitwiseError(400)
-	ErrNotLoggedIn  = SplitwiseError(401)
-	ErrUnauthorized = SplitwiseError(403)
-	ErrNotFound     = SplitwiseError(404)
+	ErrUnsuccessful SplitwiseError = 200
+	ErrBadRequest   SplitwiseError = 400
+	ErrNotLoggedIn  SplitwiseError = 401
+	ErrUnauthorized SplitwiseError = 403
+	ErrNotFound     SplitwiseError = 404
 )
 
-type errorMap struct {
-	Error  string `json:"error,omitempty"`
-	Errors struct {
-		Base []string `json:"base"`
-	} `json:"errors,omitempty"`
-}
-
-func getErrorMessage(data []byte) (string, error) {
-	var msgMap errorMap
-	if err := json.Unmarshal(data, &msgMap); err != nil {
-		return "", err
-	}
-
-	if msgMap.Error != "" {
-		return msgMap.Error, nil
-	} else {
-		if len(msgMap.Errors.Base) > 0 {
-			return strings.Join(msgMap.Errors.Base, ", "), nil
-		}
-	}
-
-	return "", nil
-}
-
-func handleResponseError(res *http.Response) error {
-	statusCode := res.StatusCode
-	message := "Unknown"
-
-	rawBody, err := io.ReadAll(res.Body)
-	if err == nil {
-		msg, err := getErrorMessage(rawBody)
-		if err == nil {
-			message = msg
-		}
-	}
-	defer res.Body.Close()
-
-	return fmt.Errorf("[%d] %s", statusCode, message)
-}
-
-func extractErrorsFromMap(m map[string]interface{}) []error {
-	errsValue, ok := m["errors"]
-	if !ok {
-		return nil
-	}
-
-	errsArray, ok := errsValue.([]interface{})
-	if !ok {
-		baseValue, ok := errsValue.(map[string]interface{})
-		if !ok {
-			return nil
-		}
-
-		base, ok := baseValue["base"]
-		if !ok {
-			return nil
-		}
-
-		errsArray, ok = base.([]interface{})
-		if !ok {
-			return nil
-		}
-
-	}
-
-	var strSlice []string
-	for _, e := range errsArray {
-		err, ok := e.(string)
-		if ok {
-			strSlice = append(strSlice, err)
-		}
-	}
-
-	var errs []error
-	for _, errStr := range strSlice {
-		err := errors.New(errStr)
-		errs = append(errs, err)
-	}
-
-	return errs
-}
-
-func handleStatusOkErrorResponse(res *http.Response, body []byte) error {
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error response is not 200")
-	}
-
-	var rawBody []byte
-	var err error
+func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
+	var rawBody []byte = body
 	if body == nil {
+		var err error
 		rawBody, err = io.ReadAll(res.Body)
 		if err != nil {
-			return err
+			if res.StatusCode == http.StatusOK {
+				c.logger().Printf("Warning: could not read from response body, but response status code is %d", res.StatusCode)
+				return nil
+			} else {
+				return SplitwiseError(res.StatusCode)
+			}
 		}
 		defer res.Body.Close()
-	} else {
-		rawBody = body
 	}
 
-	var m map[string]interface{}
-	err = json.Unmarshal(rawBody, &m)
+	if res.StatusCode != http.StatusOK {
+		return SplitwiseError(res.StatusCode)
+	}
+
+	err := extractErrorsFromBody(rawBody)
 	if err != nil {
 		return err
 	}
 
-	respErrors := extractErrorsFromMap(m)
-
-	if len(respErrors) == 1 {
-		return fmt.Errorf("%w", respErrors[0])
+	sv := extractSuccessValue(body)
+	if sv != nil && !*sv {
+		return ErrUnsuccessful
 	}
 
-	if len(respErrors) > 1 {
-		return fmt.Errorf("got multiple errors: %+v", respErrors)
-	}
+	return nil
+}
 
-	var successStatus bool = true
-	successValue, ok := m["success"]
-	if ok {
-		successStatus, ok = successValue.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected success response: %v", successValue)
-		}
-	}
+type successMap struct {
+	Success *bool `json:"success"`
+}
 
-	if successStatus {
+func extractSuccessValue(body []byte) *bool {
+	var s successMap
+	err := json.Unmarshal(body, &s)
+	if err != nil {
 		return nil
-	} else {
-		return fmt.Errorf("unsuccessful with unknown causes")
 	}
+
+	return s.Success
+}
+
+type errorMap struct {
+	Error  string `json:"error"`
+	Errors struct {
+		Base []string `json:"base"`
+	} `json:"errors"`
+}
+
+type errorsListMap struct {
+	Errors []string `json:"errors"`
+}
+
+func extractErrorsFromBody(body []byte) error {
+	var errSlice errorsListMap
+	var errMap errorMap
+
+	_ = json.Unmarshal(body, &errMap)
+	_ = json.Unmarshal(body, &errSlice)
+
+	if errMap.Error != "" {
+		return errors.New(errMap.Error)
+	}
+
+	s := errSlice.Errors
+	if len(s) > 0 {
+		errs := strings.Join(s, ", ")
+		return fmt.Errorf("multiple errors: %s", errs)
+	}
+
+	s = errMap.Errors.Base
+	if len(s) > 0 {
+		errs := strings.Join(s, ", ")
+		return fmt.Errorf("multiple errors: %s", errs)
+	}
+
+	return nil
 }

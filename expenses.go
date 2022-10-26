@@ -123,15 +123,15 @@ func (c *Client) GetExpenses(ctx context.Context, params ExpensesParams) ([]reso
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return nil, err
+	}
 
 	var container expensesContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -152,15 +152,15 @@ func (c *Client) GetExpense(ctx context.Context, id int) (resources.Expense, err
 		return resources.Expense{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Expense{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Expense{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Expense{}, err
+	}
 
 	var container expenseContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -204,17 +204,13 @@ func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64,
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err := handleStatusOkErrorResponse(res, rawBody); err != nil {
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
@@ -304,17 +300,13 @@ func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, descri
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err := handleStatusOkErrorResponse(res, rawBody); err != nil {
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
@@ -357,17 +349,13 @@ func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, descri
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if err := handleStatusOkErrorResponse(res, rawBody); err != nil {
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
@@ -390,7 +378,7 @@ func (c *Client) DeleteExpense(ctx context.Context, id int) error {
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+	if err := c.getErrorFromResponse(res, nil); err != nil {
 		return err
 	}
 
@@ -407,11 +395,7 @@ func (c *Client) RestoreExpense(ctx context.Context, id int) error {
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return handleResponseError(res)
-	}
-
-	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+	if err := c.getErrorFromResponse(res, nil); err != nil {
 		return err
 	}
 

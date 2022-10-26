@@ -30,15 +30,16 @@ func (c *Client) parseSentenceIntoExpense(ctx context.Context, input string, aut
 		return resources.ParsedExpense{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.ParsedExpense{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.ParsedExpense{}, err
 	}
 	defer res.Body.Close()
+
+	err = c.getErrorFromResponse(res, rawBody)
+	if err != nil {
+		return resources.ParsedExpense{}, err
+	}
 
 	var parsedExpense resources.ParsedExpense
 	err = json.Unmarshal(rawBody, &parsedExpense)

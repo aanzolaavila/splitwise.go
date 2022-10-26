@@ -31,15 +31,15 @@ func (c *Client) GetExpenseComments(ctx context.Context, expenseId int) ([]resou
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return nil, err
+	}
 
 	var container commentsContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -66,15 +66,15 @@ func (c *Client) CreateExpenseComment(ctx context.Context, expenseId int, conten
 		return resources.Comment{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Comment{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Comment{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Comment{}, err
+	}
 
 	var container commentContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -95,15 +95,15 @@ func (c *Client) DeleteExpenseComment(ctx context.Context, id int) (resources.Co
 		return resources.Comment{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Comment{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Comment{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Comment{}, err
+	}
 
 	var container commentContainer
 	err = json.Unmarshal(rawBody, &container)

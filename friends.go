@@ -31,15 +31,15 @@ func (c *Client) GetFriends(ctx context.Context) ([]resources.Friend, error) {
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return nil, err
+	}
 
 	var container friendsContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -60,15 +60,15 @@ func (c *Client) GetFriend(ctx context.Context, id int) (resources.Friend, error
 		return resources.Friend{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Friend{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Friend{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Friend{}, err
+	}
 
 	var container friendContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -106,15 +106,15 @@ func (c *Client) AddFriend(ctx context.Context, email string, params FriendParam
 		return resources.Friend{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Friend{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Friend{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Friend{}, err
+	}
 
 	var container friendContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -172,15 +172,15 @@ func (c *Client) AddFriends(ctx context.Context, friends []FriendUser) ([]resour
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return nil, err
+	}
 
 	var container friendUsersContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -201,7 +201,7 @@ func (c *Client) DeleteFriend(ctx context.Context, id int) error {
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+	if err := c.getErrorFromResponse(res, nil); err != nil {
 		return err
 	}
 

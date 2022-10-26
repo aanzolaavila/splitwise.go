@@ -22,15 +22,16 @@ func (c *Client) GetCurrentUser(ctx context.Context) (resources.User, error) {
 		return resources.User{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.User{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.User{}, err
 	}
 	defer res.Body.Close()
+
+	err = c.getErrorFromResponse(res, rawBody)
+	if err != nil {
+		return resources.User{}, err
+	}
 
 	var container userContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -51,15 +52,16 @@ func (c *Client) GetUser(ctx context.Context, id int) (resources.User, error) {
 		return resources.User{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.User{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.User{}, err
 	}
 	defer res.Body.Close()
+
+	err = c.getErrorFromResponse(res, rawBody)
+	if err != nil {
+		return resources.User{}, err
+	}
 
 	var container userContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -97,15 +99,16 @@ func (c *Client) UpdateUser(ctx context.Context, id int, params UserParams) (res
 		return resources.User{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.User{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.User{}, err
 	}
 	defer res.Body.Close()
+
+	err = c.getErrorFromResponse(res, rawBody)
+	if err != nil {
+		return resources.User{}, err
+	}
 
 	var container userContainer
 	err = json.Unmarshal(rawBody, &container)

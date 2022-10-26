@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -134,7 +135,10 @@ func groupExamples(ctx context.Context, client splitwise.Client) {
 	if err == nil {
 		log.Fatalf("this should have failed")
 	}
-	fmt.Printf("expected error: %v\n", err)
+	fmt.Printf("expecting NotFound error\n")
+	if !errors.Is(err, splitwise.ErrNotFound) {
+		log.Fatalf("error was unexpected, got [%v] and should have been [%v]", err, splitwise.ErrNotFound)
+	}
 
 	// Create a group
 	const createGroupName = "delete this group"
@@ -562,6 +566,10 @@ func parsedExpenseExamples(ctx context.Context, client splitwise.Client) {
 	if err != nil {
 		log.Fatalf("could not parse sentense into expense: %v", err)
 	}
+
+	defer func() {
+		_ = client.DeleteExpense(ctx, int(pexp.Expense.ID))
+	}()
 
 	var users []string
 	for _, u := range pexp.Expense.Users {

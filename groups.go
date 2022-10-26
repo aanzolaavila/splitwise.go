@@ -28,15 +28,15 @@ func (c *Client) GetGroups(ctx context.Context) ([]resources.Group, error) {
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return nil, err
+	}
 
 	var container groupsContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -57,15 +57,15 @@ func (c *Client) GetGroup(ctx context.Context, id int) (resources.Group, error) 
 		return resources.Group{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Group{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Group{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Group{}, err
+	}
 
 	var container groupContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -147,15 +147,15 @@ func (c *Client) CreateGroup(ctx context.Context, name string, params GroupParam
 		return resources.Group{}, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return resources.Group{}, handleResponseError(res)
-	}
-
 	rawBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return resources.Group{}, err
 	}
 	defer res.Body.Close()
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
+		return resources.Group{}, err
+	}
 
 	var container groupContainer
 	err = json.Unmarshal(rawBody, &container)
@@ -176,8 +176,8 @@ func (c *Client) DeleteGroup(ctx context.Context, id int) error {
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return handleResponseError(res)
+	if err := c.getErrorFromResponse(res, nil); err != nil {
+		return err
 	}
 
 	return nil
@@ -193,8 +193,8 @@ func (c *Client) RestoreGroup(ctx context.Context, id int) error {
 		return err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return handleResponseError(res)
+	if err := c.getErrorFromResponse(res, nil); err != nil {
+		return err
 	}
 
 	return nil
@@ -216,7 +216,7 @@ func (c *Client) AddUserToGroupFromUserId(ctx context.Context, groupId, userId i
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+	if err := c.getErrorFromResponse(res, nil); err != nil {
 		return err
 	}
 
@@ -241,7 +241,7 @@ func (c *Client) AddUserToGroupFromUserInfo(ctx context.Context, groupId int, fi
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+	if err := c.getErrorFromResponse(res, nil); err != nil {
 		return err
 	}
 
@@ -264,7 +264,7 @@ func (c *Client) RemoveUserFromGroup(ctx context.Context, groupId, userId int) e
 		return err
 	}
 
-	if err := handleStatusOkErrorResponse(res, nil); err != nil {
+	if err := c.getErrorFromResponse(res, nil); err != nil {
 		return err
 	}
 
