@@ -74,7 +74,7 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 
 	err := extractErrorsFromBody(rawBody)
 	if err != nil {
-		return err
+		return fmt.Errorf("got error %w: %s", ErrUnsuccessful, err.Error())
 	}
 
 	sv := extractSuccessValue(body)
@@ -122,12 +122,8 @@ func extractErrorsFromBody(body []byte) error {
 	}
 
 	s := errSlice.Errors
-	if len(s) > 0 {
-		errs := strings.Join(s, ", ")
-		return fmt.Errorf("multiple errors: %s", errs)
-	}
+	s = append(s, errMap.Errors.Base...)
 
-	s = errMap.Errors.Base
 	if len(s) > 0 {
 		errs := strings.Join(s, ", ")
 		return fmt.Errorf("multiple errors: %s", errs)
