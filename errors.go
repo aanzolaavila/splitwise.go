@@ -31,7 +31,7 @@ func (e SplitwiseError) String() string {
 }
 
 func (e SplitwiseError) Error() string {
-	return fmt.Sprintf("[%d] %s", e, e.String())
+	return fmt.Sprintf("status code %d: %s", e, e.String())
 }
 
 func (e SplitwiseError) Is(target error) bool {
