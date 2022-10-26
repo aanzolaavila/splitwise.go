@@ -23,6 +23,8 @@ func (e SplitwiseError) String() string {
 		return "Invalid API request: you do not have permission to perform that action"
 	case 404:
 		return "Invalid API Request: record not found"
+	case 500:
+		return "Server error"
 	default:
 		return "Unknown error"
 	}
@@ -42,11 +44,12 @@ func (e SplitwiseError) Is(target error) bool {
 
 const (
 	// Splitwise responds 200s on some erroneous requests
-	ErrUnsuccessful SplitwiseError = 200
-	ErrBadRequest   SplitwiseError = 400
-	ErrNotLoggedIn  SplitwiseError = 401
-	ErrUnauthorized SplitwiseError = 403
-	ErrNotFound     SplitwiseError = 404
+	ErrUnsuccessful    SplitwiseError = 200
+	ErrBadRequest      SplitwiseError = 400
+	ErrNotLoggedIn     SplitwiseError = 401
+	ErrUnauthorized    SplitwiseError = 403
+	ErrNotFound        SplitwiseError = 404
+	ErrSplitwiseServer SplitwiseError = 500
 )
 
 func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
