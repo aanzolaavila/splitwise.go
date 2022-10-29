@@ -78,7 +78,7 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 		return fmt.Errorf("got error %w: %s", ErrUnsuccessful, err.Error())
 	}
 
-	sv := extractSuccessValue(body)
+	sv := extractSuccessValue(rawBody)
 	if sv != nil && !*sv {
 		return ErrUnsuccessful
 	}
