@@ -15,13 +15,17 @@ import (
 const DefaultBaseUrl = "https://secure.splitwise.com"
 const DefaultApiVersionPath = "/api/v3.0"
 
-type HttpClient interface {
+type logger interface {
+	Printf(string, ...any)
+}
+
+type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
 type Client struct {
-	Logger         *log.Logger
-	HttpClient     HttpClient
+	Logger         logger
+	HttpClient     httpClient
 	BaseUrl        string
 	ApiVersionPath string
 	Token          string
@@ -49,7 +53,7 @@ func (c *Client) apiVersionPath() string {
 	return c.ApiVersionPath
 }
 
-func (c *Client) httpClient() HttpClient {
+func (c *Client) getHttpClient() httpClient {
 	if c.HttpClient == nil {
 		c.HttpClient = defaultHttpClient()
 	}
@@ -57,7 +61,7 @@ func (c *Client) httpClient() HttpClient {
 	return c.HttpClient
 }
 
-func (c *Client) logger() *log.Logger {
+func (c *Client) getLogger() logger {
 	if c.Logger == nil {
 		return log.Default()
 	}
@@ -104,7 +108,7 @@ func (c *Client) do(ctx context.Context, method string, path string, queryParams
 
 	c.addRequiredHeaders(req)
 
-	c.logger().Printf("%s %s\n", method, endpointUrl.String())
+	c.getLogger().Printf("%s %s\n", method, endpointUrl.String())
 
-	return c.httpClient().Do(req)
+	return c.getHttpClient().Do(req)
 }

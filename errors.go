@@ -59,12 +59,13 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 		rawBody, err = io.ReadAll(res.Body)
 		if err != nil {
 			if res.StatusCode == http.StatusOK {
-				c.logger().Printf("Warning: could not read from response body, but response status code is %d", res.StatusCode)
+				c.getLogger().Printf("Warning: could not read from response body, but response status code is %d", res.StatusCode)
 				return nil
-			} else {
-				return SplitwiseError(res.StatusCode)
 			}
+
+			return SplitwiseError(res.StatusCode)
 		}
+
 		defer res.Body.Close()
 	}
 
