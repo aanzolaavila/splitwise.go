@@ -31,11 +31,13 @@ func getOAuthClient() splitwise.Client {
 		ClientSecret: clientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://secure.splitwise.com/oauth/authorize",
-			TokenURL: "https://secure.splitwise.com/oauth/token ",
+			TokenURL: "https://secure.splitwise.com/oauth/token",
 		},
+		// redirect_url is required as splitwise reports "invalid_grant" error otherwise
+		RedirectURL: "https://localhost:17000/oauth/redirect",
 	}
 
-	state := "random_string"
+	state := "state"
 
 	url := conf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	fmt.Printf("Visit the URL for the auth dialog: %v\n", url)

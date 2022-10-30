@@ -8,9 +8,9 @@ test: setup
 
 .PHONY: coverage
 coverage: setup
-	go test -v -cover -coverprofile=c.out .
-	go tool cover -html=c.out
-	rm -f c.out
+	go test -v -cover -coverprofile=coverage.out .
+	go tool cover -html=coverage.out
+	rm -f coverage.out
 
 .PHONY: examples
 examples: setup
