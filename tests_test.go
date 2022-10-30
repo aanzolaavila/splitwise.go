@@ -43,9 +43,13 @@ func (c mockHttpClient) Do(r *http.Request) (*http.Response, error) {
 	return c.DoFunc(r)
 }
 
-func testClient(statusCode int, response string) (_ Client, cancel func()) {
+func testClient(t *testing.T, statusCode int, method, response string) (_ Client, cancel func()) {
 	server := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if method != "" {
+				assert.Equal(t, method, r.Method)
+			}
+
 			w.WriteHeader(statusCode)
 			_, _ = w.Write([]byte(response))
 		},
@@ -191,7 +195,7 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 }
 
 func doErrorResponseTest(t *testing.T, f func(Client) error, statusCode int, body string) error {
-	client, cancel := testClient(statusCode, body)
+	client, cancel := testClient(t, statusCode, "", body)
 	defer cancel()
 
 	return f(client)
@@ -199,7 +203,7 @@ func doErrorResponseTest(t *testing.T, f func(Client) error, statusCode int, bod
 
 func doInvalidJsonResponseErrorTest(t *testing.T, f func(Client) error) {
 	const invalidJson = `{ invalid }`
-	client, cancel := testClient(http.StatusOK, invalidJson)
+	client, cancel := testClient(t, http.StatusOK, "", invalidJson)
 	defer cancel()
 
 	err := f(client)

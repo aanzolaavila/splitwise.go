@@ -20,7 +20,7 @@ const currenciesSuccessResponse = `
 `
 
 func Test_GetCurrencies_SanityCheck(t *testing.T) {
-	client, cancel := testClient(http.StatusOK, currenciesSuccessResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, currenciesSuccessResponse)
 	defer cancel()
 
 	ctx := context.Background()

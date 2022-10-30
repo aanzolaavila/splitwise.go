@@ -31,7 +31,7 @@ const notificationsSuccessResponse = `
 `
 
 func Test_GetNotifications_SanityCheck(t *testing.T) {
-	client, cancel := testClient(http.StatusOK, notificationsSuccessResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, notificationsSuccessResponse)
 	defer cancel()
 
 	ctx := context.Background()

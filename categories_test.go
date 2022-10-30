@@ -2,6 +2,7 @@ package splitwise
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/aanzolaavila/splitwise.go/resources"
@@ -46,8 +47,8 @@ const categoriesSuccessResponse = `
   ]
 }`
 
-func Test_Categories_SanityCheck(t *testing.T) {
-	client, cancel := testClient(200, categoriesSuccessResponse)
+func Test_GetCategories_SanityCheck(t *testing.T) {
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, categoriesSuccessResponse)
 	defer cancel()
 
 	ctx := context.Background()

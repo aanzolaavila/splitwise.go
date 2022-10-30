@@ -36,7 +36,7 @@ const currentUser200Resp = `
 `
 
 func Test_GetCurrentUser_200Response(t *testing.T) {
-	client, cancel := testClient(200, currentUser200Resp)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, currentUser200Resp)
 	defer cancel()
 
 	ctx := context.Background()
@@ -58,7 +58,7 @@ const currentUser401Resp = `
 `
 
 func Test_GetCurrentUser_401Response(t *testing.T) {
-	client, cancel := testClient(401, currentUser401Resp)
+	client, cancel := testClient(t, http.StatusUnauthorized, http.MethodGet, currentUser401Resp)
 	defer cancel()
 
 	ctx := context.Background()
@@ -98,7 +98,7 @@ const getUser200Resp = `
 `
 
 func Test_GetUser_200Response(t *testing.T) {
-	client, cancel := testClient(200, getUser200Resp)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, getUser200Resp)
 	defer cancel()
 
 	ctx := context.Background()
@@ -129,6 +129,8 @@ func Test_UpdateUser(t *testing.T) {
 	const userID = resources.UserID(15)
 
 	client, cancel := testClientWithHandler(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+
 		input := struct {
 			Firstname       string `json:"first_name"`
 			Lastname        string `json:"last_name"`

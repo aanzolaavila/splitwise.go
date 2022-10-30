@@ -19,7 +19,7 @@ func Test_Error400Response(t *testing.T) {
   }
 }
 `
-	client, cancel := testClient(400, error400Response)
+	client, cancel := testClient(t, http.StatusBadRequest, http.MethodGet, error400Response)
 	defer cancel()
 
 	ctx := context.Background()
@@ -37,7 +37,7 @@ func Test_Error401Response(t *testing.T) {
   "error": "Invalid API request: you are not logged in"
 }
 `
-	client, cancel := testClient(401, error401Response)
+	client, cancel := testClient(t, http.StatusUnauthorized, http.MethodGet, error401Response)
 	defer cancel()
 
 	ctx := context.Background()
@@ -59,7 +59,7 @@ func Test_Error403Response(t *testing.T) {
   }
 }
 `
-	client, cancel := testClient(403, error403Response)
+	client, cancel := testClient(t, http.StatusForbidden, http.MethodGet, error403Response)
 	defer cancel()
 
 	ctx := context.Background()
@@ -81,7 +81,7 @@ func Test_Error404Response(t *testing.T) {
   }
 }
 `
-	client, cancel := testClient(404, error404Response)
+	client, cancel := testClient(t, http.StatusNotFound, http.MethodGet, error404Response)
 	defer cancel()
 
 	ctx := context.Background()
@@ -100,7 +100,7 @@ func Test_Error200NoSuccessResponse(t *testing.T) {
   "errors": []
 }
 `
-	client, cancel := testClient(200, error200UnsuccessfulResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, error200UnsuccessfulResponse)
 	defer cancel()
 
 	ctx := context.Background()
@@ -119,7 +119,7 @@ func Test_Error200ErrorsSliceResponse(t *testing.T) {
   "errors": ["This is an error"]
 }
 `
-	client, cancel := testClient(200, error200UnsuccessfulResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, error200UnsuccessfulResponse)
 	defer cancel()
 
 	ctx := context.Background()
@@ -140,7 +140,7 @@ func Test_Error200SingleErrorResponse(t *testing.T) {
   "error": "This is an error"
 }
 `
-	client, cancel := testClient(200, error200UnsuccessfulResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, error200UnsuccessfulResponse)
 	defer cancel()
 
 	ctx := context.Background()
@@ -159,7 +159,7 @@ func Test_Error200SuccessResponse_ShouldNotFail(t *testing.T) {
   "success": true
 }
 `
-	client, cancel := testClient(200, error200SuccessfulResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, error200SuccessfulResponse)
 	defer cancel()
 
 	ctx := context.Background()
@@ -176,7 +176,7 @@ func Test_200Response_InvalidJsonShouldNotFail(t *testing.T) {
 {
   "success": true
 `
-	client, cancel := testClient(200, error200ErroneousSuccessfulResponse)
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, error200ErroneousSuccessfulResponse)
 	defer cancel()
 
 	ctx := context.Background()
