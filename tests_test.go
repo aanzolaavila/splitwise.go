@@ -154,6 +154,7 @@ func doFaultyResponseBodyTest(t *testing.T, f func(Client) error) {
 
 const (
 	successResponse    = `{ "success": true }`
+	successResponse2   = `{}`
 	noSuccessResponse  = `{ "success": false }`
 	errorResponse      = `{ "error": "one error" }`
 	errorsResponse     = `{ "errors": ["err 1", "err 2"] }`
@@ -167,6 +168,7 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 		ExpectedError error
 	}{
 		{http.StatusOK, successResponse, nil},
+		{http.StatusOK, successResponse2, nil},
 		{http.StatusOK, noSuccessResponse, ErrUnsuccessful},
 		{http.StatusOK, errorResponse, ErrUnsuccessful},
 		{http.StatusOK, errorsResponse, ErrUnsuccessful},
