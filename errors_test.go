@@ -68,7 +68,7 @@ func Test_Error403Response(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = client.getErrorFromResponse(res, nil)
-	assert.ErrorIs(t, err, ErrUnauthorized)
+	assert.ErrorIs(t, err, ErrForbidden)
 }
 
 func Test_Error404Response(t *testing.T) {

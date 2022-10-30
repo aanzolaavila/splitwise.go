@@ -67,6 +67,17 @@ func Test_GetCurrentUser_401Response(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotLoggedIn)
 }
 
+func Test_GetCurrentUser_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		_, err := client.GetCurrentUser(ctx)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
+
 // ---
 
 const getUser200Resp = `
@@ -99,6 +110,17 @@ func Test_GetUser_200Response(t *testing.T) {
 	assert.Equal(t, "Ada", user.FirstName)
 	assert.Equal(t, "Lovelace", user.LastName)
 	assert.Equal(t, "ada@example.com", user.Email)
+}
+
+func Test_GetUser_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		_, err := client.GetUser(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
 }
 
 // ---
@@ -168,4 +190,15 @@ func Test_UpdateUser(t *testing.T) {
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, firstname, user.FirstName)
 	assert.Equal(t, lastname, user.LastName)
+}
+
+func Test_UpdateUser_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		_, err := client.UpdateUser(ctx, 0, nil)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
 }

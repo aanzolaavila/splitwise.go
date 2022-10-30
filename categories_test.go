@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
 	"github.com/aanzolaavila/splitwise.go/resources"
@@ -67,23 +66,14 @@ func Test_Categories_SanityCheck(t *testing.T) {
 	assert.Equal(t, resources.CategoryID(48), subcat.ID)
 }
 
-func Test_Categories_FaultyClient(t *testing.T) {
-	client, expectedErr := testClientWithFaultyResponse()
+func Test_GetCategories_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		cats, err := client.GetCategories(ctx)
+		assert.Len(t, cats, 0)
 
-	ctx := context.Background()
+		return err
+	}
 
-	categories, err := client.GetCategories(ctx)
-	assert.ErrorIs(t, err, expectedErr)
-	assert.Len(t, categories, 0)
-}
-
-func Test_Categories_FaultyBodyShouldFail(t *testing.T) {
-	client, expectedErr, cancel := testClientWithFaultyResponseBody(t, http.StatusOK)
-	defer cancel()
-
-	ctx := context.Background()
-
-	cats, err := client.GetCategories(ctx)
-	assert.ErrorIs(t, err, expectedErr)
-	assert.Len(t, cats, 0)
+	doBasicErrorChecks(t, f)
 }

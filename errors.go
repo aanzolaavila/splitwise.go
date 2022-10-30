@@ -47,7 +47,7 @@ const (
 	ErrUnsuccessful    SplitwiseError = http.StatusOK
 	ErrBadRequest      SplitwiseError = http.StatusBadRequest
 	ErrNotLoggedIn     SplitwiseError = http.StatusUnauthorized
-	ErrUnauthorized    SplitwiseError = http.StatusForbidden
+	ErrForbidden       SplitwiseError = http.StatusForbidden
 	ErrNotFound        SplitwiseError = http.StatusNotFound
 	ErrSplitwiseServer SplitwiseError = http.StatusInternalServerError
 )

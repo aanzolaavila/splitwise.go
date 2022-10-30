@@ -1,10 +1,13 @@
 package splitwise
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type mockReadCloser struct {
@@ -121,4 +124,75 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 	return client, expectedError, func() {
 		defer server.Close()
 	}
+}
+
+func doBasicErrorChecks(t *testing.T, f func(Client) error) {
+	if f == nil {
+		panic("callback function is nil")
+	}
+
+	doFaultyClientTest(t, f)
+	doFaultyResponseBodyTest(t, f)
+	doErrorResponseTests(t, f)
+	doInvalidJsonResponseErrorTest(t, f)
+}
+
+func doFaultyClientTest(t *testing.T, f func(Client) error) {
+	client, expectedError := testClientWithFaultyResponse()
+
+	err := f(client)
+	assert.ErrorIs(t, err, expectedError)
+}
+
+func doFaultyResponseBodyTest(t *testing.T, f func(Client) error) {
+	client, expectedErr, cancel := testClientWithFaultyResponseBody(t, http.StatusOK)
+	defer cancel()
+
+	err := f(client)
+	assert.ErrorIs(t, err, expectedErr)
+}
+
+const noSuccessResponse = `{ "success": false }`
+const errorResponse = `{ "error": "one error" }`
+const errorsResponse = `{ "errors": ["err 1", "err 2"] }`
+const errorsBaseResponse = `{ "errors": { "base": ["err 1", "err 2"] } }`
+
+func doErrorResponseTests(t *testing.T, f func(Client) error) {
+	checks := []struct {
+		StatusCode    int
+		Body          string
+		ExpectedError error
+	}{
+		{http.StatusOK, noSuccessResponse, ErrUnsuccessful},
+		{http.StatusOK, errorResponse, ErrUnsuccessful},
+		{http.StatusOK, errorsResponse, ErrUnsuccessful},
+		{http.StatusOK, errorsBaseResponse, ErrUnsuccessful},
+		{http.StatusNotFound, "", ErrNotFound},
+		{http.StatusForbidden, "", ErrForbidden},
+		{http.StatusInternalServerError, "", ErrSplitwiseServer},
+		{http.StatusBadRequest, "", ErrBadRequest},
+	}
+
+	for _, c := range checks {
+		err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
+		assert.ErrorIs(t, err, c.ExpectedError)
+	}
+}
+
+func doErrorResponseTest(t *testing.T, f func(Client) error, statusCode int, body string) error {
+	client, cancel := testClient(statusCode, body)
+	defer cancel()
+
+	return f(client)
+}
+
+func doInvalidJsonResponseErrorTest(t *testing.T, f func(Client) error) {
+	const invalidJson = `{ invalid }`
+	client, cancel := testClient(http.StatusOK, invalidJson)
+	defer cancel()
+
+	err := f(client)
+
+	var syntaxErr *json.SyntaxError
+	assert.ErrorAs(t, err, &syntaxErr)
 }
