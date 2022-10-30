@@ -152,10 +152,13 @@ func doFaultyResponseBodyTest(t *testing.T, f func(Client) error) {
 	assert.ErrorIs(t, err, expectedErr)
 }
 
-const noSuccessResponse = `{ "success": false }`
-const errorResponse = `{ "error": "one error" }`
-const errorsResponse = `{ "errors": ["err 1", "err 2"] }`
-const errorsBaseResponse = `{ "errors": { "base": ["err 1", "err 2"] } }`
+const (
+	successResponse    = `{ "success": true }`
+	noSuccessResponse  = `{ "success": false }`
+	errorResponse      = `{ "error": "one error" }`
+	errorsResponse     = `{ "errors": ["err 1", "err 2"] }`
+	errorsBaseResponse = `{ "errors": { "base": ["err 1", "err 2"] } }`
+)
 
 func doErrorResponseTests(t *testing.T, f func(Client) error) {
 	checks := []struct {
@@ -163,6 +166,7 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 		Body          string
 		ExpectedError error
 	}{
+		{http.StatusOK, successResponse, nil},
 		{http.StatusOK, noSuccessResponse, ErrUnsuccessful},
 		{http.StatusOK, errorResponse, ErrUnsuccessful},
 		{http.StatusOK, errorsResponse, ErrUnsuccessful},
@@ -176,7 +180,11 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 
 	for _, c := range checks {
 		err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
-		assert.ErrorIs(t, err, c.ExpectedError)
+		if c.ExpectedError == nil {
+			assert.NoError(t, err)
+		} else {
+			assert.ErrorIs(t, err, c.ExpectedError)
+		}
 	}
 }
 
