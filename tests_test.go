@@ -168,6 +168,7 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 		{http.StatusOK, errorsResponse, ErrUnsuccessful},
 		{http.StatusOK, errorsBaseResponse, ErrUnsuccessful},
 		{http.StatusNotFound, "", ErrNotFound},
+		{http.StatusUnauthorized, "", ErrNotLoggedIn},
 		{http.StatusForbidden, "", ErrForbidden},
 		{http.StatusInternalServerError, "", ErrSplitwiseServer},
 		{http.StatusBadRequest, "", ErrBadRequest},
