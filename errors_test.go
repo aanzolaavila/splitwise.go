@@ -2,9 +2,7 @@ package splitwise
 
 import (
 	"context"
-	"errors"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -196,38 +194,8 @@ func Test_200Response_ShouldNotFailIfInvalidBody(t *testing.T) {
   "success": true
 }
 `
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(successResponse))
-	}))
-
-	httpClient := server.Client()
-	url := server.URL
-
-	expectedError := errors.New("this error is expected")
-
-	mockHttpClient := mockHttpClient{
-		DoFunc: func(r *http.Request) (*http.Response, error) {
-			res, err := httpClient.Do(r)
-			if err != nil {
-				t.Fatalf("connection to mocked http server failed: %v", err)
-			}
-
-			reader := mockReadCloser{
-				ReadFunc: func(p []byte) (n int, err error) {
-					return 0, expectedError
-				},
-			}
-
-			res.Body = reader
-			return res, nil
-		},
-	}
-
-	client := Client{
-		HttpClient: mockHttpClient,
-		BaseUrl:    url,
-	}
+	client, _, cancel := testClientWithFaultyResponseBody(t, http.StatusOK)
+	defer cancel()
 
 	ctx := context.Background()
 
@@ -244,38 +212,8 @@ func Test_4XXResponse_ShouldFailIfInvalidBody(t *testing.T) {
   "success": true
 }
 `
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte(successResponse))
-	}))
-
-	httpClient := server.Client()
-	url := server.URL
-
-	expectedError := errors.New("this error is expected")
-
-	mockHttpClient := mockHttpClient{
-		DoFunc: func(r *http.Request) (*http.Response, error) {
-			res, err := httpClient.Do(r)
-			if err != nil {
-				t.Fatalf("connection to mocked http server failed: %v", err)
-			}
-
-			reader := mockReadCloser{
-				ReadFunc: func(p []byte) (n int, err error) {
-					return 0, expectedError
-				},
-			}
-
-			res.Body = reader
-			return res, nil
-		},
-	}
-
-	client := Client{
-		HttpClient: mockHttpClient,
-		BaseUrl:    url,
-	}
+	client, _, cancel := testClientWithFaultyResponseBody(t, http.StatusNotFound)
+	defer cancel()
 
 	ctx := context.Background()
 

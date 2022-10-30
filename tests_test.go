@@ -1,8 +1,10 @@
 package splitwise
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 )
 
 type mockReadCloser struct {
@@ -65,6 +67,58 @@ func testClientWithHandler(handler http.HandlerFunc) (_ Client, cancel func()) {
 	}
 
 	return client, func() {
+		defer server.Close()
+	}
+}
+
+func testClientWithFaultyResponse() (Client, error) {
+	expectedError := errors.New("this error is expected")
+
+	mockClient := mockHttpClient{
+		DoFunc: func(r *http.Request) (*http.Response, error) {
+			return nil, expectedError
+		},
+	}
+
+	return Client{
+		HttpClient: mockClient,
+	}, expectedError
+}
+
+func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, error, func()) {
+	expectedError := errors.New("this error is expected")
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(statusCode)
+	}))
+
+	httpClient := server.Client()
+	url := server.URL
+
+	mockHttpClient := mockHttpClient{
+		DoFunc: func(r *http.Request) (*http.Response, error) {
+			res, err := httpClient.Do(r)
+			if err != nil {
+				t.Fatalf("connection to mocked http server failed: %v", err)
+			}
+
+			reader := mockReadCloser{
+				ReadFunc: func(p []byte) (n int, err error) {
+					return 0, expectedError
+				},
+			}
+
+			res.Body = reader
+			return res, nil
+		},
+	}
+
+	client := Client{
+		HttpClient: mockHttpClient,
+		BaseUrl:    url,
+	}
+
+	return client, expectedError, func() {
 		defer server.Close()
 	}
 }
