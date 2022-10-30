@@ -36,7 +36,9 @@ func Test_GetNotifications_SanityCheck(t *testing.T) {
 
 	ctx := context.Background()
 
-	nots, err := client.GetNotifications(ctx, nil)
+	nots, err := client.GetNotifications(ctx, NotificationsParams{
+		NotificationsLimit: 100,
+	})
 	assert.NoError(t, err)
 
 	assert.Len(t, nots, 1)
