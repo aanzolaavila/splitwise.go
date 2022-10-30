@@ -13,18 +13,18 @@ type SplitwiseError uint16
 
 func (e SplitwiseError) String() string {
 	switch e {
-	case 200:
+	case http.StatusOK:
 		return "Request was unsuccessful"
-	case 400:
+	case http.StatusBadRequest:
 		return "Bad request"
-	case 401:
+	case http.StatusUnauthorized:
 		return "Invalid API request: you are not logged in"
-	case 403:
+	case http.StatusForbidden:
 		return "Invalid API request: you do not have permission to perform that action"
-	case 404:
+	case http.StatusNotFound:
 		return "Invalid API Request: record not found"
-	case 500:
-		return "Server error"
+	case http.StatusInternalServerError:
+		return "Internal Server Error"
 	default:
 		return "Unknown error"
 	}
@@ -44,12 +44,12 @@ func (e SplitwiseError) Is(target error) bool {
 
 const (
 	// Splitwise responds 200s on some erroneous requests
-	ErrUnsuccessful    SplitwiseError = 200
-	ErrBadRequest      SplitwiseError = 400
-	ErrNotLoggedIn     SplitwiseError = 401
-	ErrUnauthorized    SplitwiseError = 403
-	ErrNotFound        SplitwiseError = 404
-	ErrSplitwiseServer SplitwiseError = 500
+	ErrUnsuccessful    SplitwiseError = http.StatusOK
+	ErrBadRequest      SplitwiseError = http.StatusBadRequest
+	ErrNotLoggedIn     SplitwiseError = http.StatusUnauthorized
+	ErrUnauthorized    SplitwiseError = http.StatusForbidden
+	ErrNotFound        SplitwiseError = http.StatusNotFound
+	ErrSplitwiseServer SplitwiseError = http.StatusInternalServerError
 )
 
 func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
