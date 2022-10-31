@@ -25,9 +25,12 @@ $ TOKEN="<your-api-token>" make examples
 ```
 
 ### With OAuth 2.0
+For this method, make sure that the Callback URI is the same one as this [line](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L37)
 ```bash
 $ CLIENT_ID="<client-id>" CLIENT_SECRET="<client-secret>" make examples
-# The app will ask you to open a link in the web browser, it will redirect you to a page with a URI that looks like https://localhost:17000/oauth/redirect/?code=YOUR_CODE&state=state
+# The app will ask you to open a link in the web browser,
+# it will redirect you to a page with a URI that looks
+# like https://localhost:17000/oauth/redirect/?code=YOUR_CODE&state=state
 
 # copy YOUR_CODE into the terminal and it will execute the examples
 ```
