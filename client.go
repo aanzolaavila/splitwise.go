@@ -16,7 +16,7 @@ const DefaultBaseUrl = "https://secure.splitwise.com"
 const DefaultApiVersionPath = "/api/v3.0"
 
 type logger interface {
-	Printf(string, ...any)
+	Printf(string, ...interface{})
 }
 
 type httpClient interface {
