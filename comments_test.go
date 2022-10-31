@@ -123,7 +123,7 @@ func Test_CreateExpenseComments_SanityCheck(t *testing.T) {
 }
 
 func Test_CreateExpenseComments_ShouldFailIfEmptyContent(t *testing.T) {
-	httpClient := mockHttpClient{
+	httpClient := httpClientStub{
 		DoFunc: func(r *http.Request) (*http.Response, error) {
 			const msg = "the client should have never been called"
 			t.Fatalf(msg)

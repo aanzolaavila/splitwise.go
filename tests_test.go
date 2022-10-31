@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockReadCloser struct {
+type readCloserStub struct {
 	ReadFunc  func(p []byte) (n int, err error)
 	CloseFunc func() error
 }
 
-func (r mockReadCloser) Read(p []byte) (n int, err error) {
+func (r readCloserStub) Read(p []byte) (n int, err error) {
 	if r.ReadFunc == nil {
 		panic("read func is nil")
 	}
@@ -23,7 +23,7 @@ func (r mockReadCloser) Read(p []byte) (n int, err error) {
 	return r.ReadFunc(p)
 }
 
-func (r mockReadCloser) Close() error {
+func (r readCloserStub) Close() error {
 	if r.CloseFunc == nil {
 		return nil
 	}
@@ -31,11 +31,11 @@ func (r mockReadCloser) Close() error {
 	return r.CloseFunc()
 }
 
-type mockHttpClient struct {
+type httpClientStub struct {
 	DoFunc func(*http.Request) (*http.Response, error)
 }
 
-func (c mockHttpClient) Do(r *http.Request) (*http.Response, error) {
+func (c httpClientStub) Do(r *http.Request) (*http.Response, error) {
 	if c.DoFunc == nil {
 		panic("mocked function is nil")
 	}
@@ -81,7 +81,7 @@ func testClientWithHandler(handler http.HandlerFunc) (_ Client, cancel func()) {
 func testClientWithFaultyResponse() (Client, error) {
 	expectedError := errors.New("this error is expected")
 
-	mockClient := mockHttpClient{
+	mockClient := httpClientStub{
 		DoFunc: func(r *http.Request) (*http.Response, error) {
 			return nil, expectedError
 		},
@@ -102,14 +102,14 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 	httpClient := server.Client()
 	url := server.URL
 
-	mockHttpClient := mockHttpClient{
+	mockHttpClient := httpClientStub{
 		DoFunc: func(r *http.Request) (*http.Response, error) {
 			res, err := httpClient.Do(r)
 			if err != nil {
 				t.Fatalf("connection to mocked http server failed: %v", err)
 			}
 
-			reader := mockReadCloser{
+			reader := readCloserStub{
 				ReadFunc: func(p []byte) (n int, err error) {
 					return 0, expectedError
 				},
