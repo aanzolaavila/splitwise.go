@@ -150,3 +150,49 @@ func Test_CreateExpenseComments_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+const deleteExpenseComment200Response = `
+{
+  "comment": {
+    "id": 79800950,
+    "content": "Does this include the delivery fee?",
+    "comment_type": "User",
+    "relation_type": "ExpenseComment",
+    "relation_id": 855870953,
+    "created_at": "2019-08-24T14:15:22Z",
+    "deleted_at": "2019-08-24T14:15:22Z",
+    "user": {
+      "id": 491923,
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "picture": {
+        "medium": "image_url"
+      }
+    }
+  }
+}
+`
+
+func Test_DeleteExpenseComment_SanityCheck(t *testing.T) {
+	client, cancel := testClient(t, http.StatusOK, http.MethodPost, deleteExpenseComment200Response)
+	defer cancel()
+
+	ctx := context.Background()
+	const commId = 79800950
+	com, err := client.DeleteExpenseComment(ctx, commId)
+	assert.NoError(t, err)
+
+	assert.Equal(t, resources.CommentID(commId), com.ID)
+	assert.Equal(t, "ExpenseComment", com.RelationType)
+}
+
+func Test_DeleteExpenseComment_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		_, err := client.DeleteExpenseComment(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
