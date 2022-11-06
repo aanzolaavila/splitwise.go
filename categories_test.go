@@ -7,6 +7,7 @@ import (
 
 	"github.com/aanzolaavila/splitwise.go/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const categoriesSuccessResponse = `
@@ -54,14 +55,14 @@ func Test_GetCategories_SanityCheck(t *testing.T) {
 	ctx := context.Background()
 
 	categories, err := client.GetCategories(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Len(t, categories, 1)
+	require.Len(t, categories, 1)
 
 	cat := categories[0]
 	assert.Equal(t, resources.CategoryID(1), cat.ID)
 
-	assert.Len(t, cat.Subcategories, 1)
+	require.Len(t, cat.Subcategories, 1)
 
 	subcat := cat.Subcategories[0]
 	assert.Equal(t, resources.CategoryID(48), subcat.ID)

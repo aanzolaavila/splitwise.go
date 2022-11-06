@@ -91,7 +91,7 @@ func (c *Client) AddFriend(ctx context.Context, email string, params FriendParam
 	const basePath = "/create_friend"
 
 	if email == "" {
-		return resources.Friend{}, fmt.Errorf("email cannot be empty")
+		return resources.Friend{}, fmt.Errorf("%w: email cannot be empty", ErrInvalidParameter)
 	}
 
 	bodyParams := make(map[string]interface{})
@@ -135,7 +135,7 @@ func addFriendUserParamsToMap(idx int, f FriendUser, m map[string]interface{}) e
 	const format = "friends__%d__%s"
 
 	if f.Email == "" {
-		return fmt.Errorf("email is required for the friend: %+v", f)
+		return fmt.Errorf("%w: email is required for the friend: %+v", ErrInvalidParameter, f)
 	}
 
 	if v := f.Email; v != "" {

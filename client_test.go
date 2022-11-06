@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_IfTokenIsDefinedItShouldBeInHeader(t *testing.T) {
@@ -28,7 +29,7 @@ func Test_IfTokenIsDefinedItShouldBeInHeader(t *testing.T) {
 	client.Token = testToken
 
 	res, err := client.do(ctx, http.MethodGet, "/generic", nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }

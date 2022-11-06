@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const currenciesSuccessResponse = `
@@ -26,9 +27,9 @@ func Test_GetCurrencies_SanityCheck(t *testing.T) {
 	ctx := context.Background()
 
 	curs, err := client.GetCurrencies(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Len(t, curs, 1)
+	require.Len(t, curs, 1)
 
 	cur := curs[0]
 	assert.Equal(t, "BRL", cur.CurrencyCode)

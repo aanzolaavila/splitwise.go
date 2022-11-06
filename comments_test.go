@@ -3,13 +3,13 @@ package splitwise
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"testing"
 
 	"github.com/aanzolaavila/splitwise.go/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const getExpensesComments200Response = `
@@ -42,9 +42,9 @@ func Test_GetExpenseComments_SanityChecks(t *testing.T) {
 
 	ctx := context.Background()
 	comments, err := client.GetExpenseComments(ctx, 855870953)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Len(t, comments, 1)
+	require.Len(t, comments, 1)
 
 	com := comments[0]
 	assert.Equal(t, resources.CommentID(79800950), com.ID)
@@ -100,11 +100,11 @@ func Test_CreateExpenseComments_SanityCheck(t *testing.T) {
 		}{}
 
 		rawBody, err := io.ReadAll(r.Body)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer r.Body.Close()
 
 		err = json.Unmarshal(rawBody, &input)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, expenseId, input.ExpenseId)
 		assert.Equal(t, content, input.Content)
@@ -116,28 +116,18 @@ func Test_CreateExpenseComments_SanityCheck(t *testing.T) {
 
 	ctx := context.Background()
 	com, err := client.CreateExpenseComment(ctx, expenseId, content)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, resources.Identifier(expenseId), com.RelationID)
 	assert.Equal(t, content, com.Content)
 }
 
 func Test_CreateExpenseComments_ShouldFailIfEmptyContent(t *testing.T) {
-	httpClient := httpClientStub{
-		DoFunc: func(r *http.Request) (*http.Response, error) {
-			const msg = "the client should have never been called"
-			t.Fatalf(msg)
-			return nil, errors.New(msg)
-		},
-	}
-
-	client := Client{
-		HttpClient: httpClient,
-	}
+	client := testClientThatFailsTestIfHttpIsCalled(t)
 
 	ctx := context.Background()
 	_, err := client.CreateExpenseComment(ctx, 0, "")
-	assert.Error(t, err)
+	require.ErrorIs(t, err, ErrInvalidParameter)
 }
 
 func Test_CreateExpenseComments_BasicErrorTests(t *testing.T) {
@@ -180,7 +170,7 @@ func Test_DeleteExpenseComment_SanityCheck(t *testing.T) {
 	ctx := context.Background()
 	const commId = 79800950
 	com, err := client.DeleteExpenseComment(ctx, commId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, resources.CommentID(commId), com.ID)
 	assert.Equal(t, "ExpenseComment", com.RelationType)

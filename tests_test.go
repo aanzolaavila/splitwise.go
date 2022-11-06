@@ -3,6 +3,7 @@ package splitwise
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -78,17 +79,32 @@ func testClientWithHandler(handler http.HandlerFunc) (_ Client, cancel func()) {
 	}
 }
 
+func testClientThatFailsTestIfHttpIsCalled(t *testing.T) Client {
+	stubClient := httpClientStub{
+		DoFunc: func(r *http.Request) (*http.Response, error) {
+			t.Fatal("the stub http client should not have been called")
+			return nil, fmt.Errorf("failed test")
+		},
+	}
+
+	return Client{
+		HttpClient: stubClient,
+		BaseUrl:    "test.invalid.host",
+	}
+}
+
 func testClientWithFaultyResponse() (Client, error) {
 	expectedError := errors.New("this error is expected")
 
-	mockClient := httpClientStub{
+	stubClient := httpClientStub{
 		DoFunc: func(r *http.Request) (*http.Response, error) {
 			return nil, expectedError
 		},
 	}
 
 	return Client{
-		HttpClient: mockClient,
+		HttpClient: stubClient,
+		BaseUrl:    "test.invalid.host",
 	}, expectedError
 }
 
@@ -102,7 +118,7 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 	httpClient := server.Client()
 	url := server.URL
 
-	mockHttpClient := httpClientStub{
+	stubHttpClient := httpClientStub{
 		DoFunc: func(r *http.Request) (*http.Response, error) {
 			res, err := httpClient.Do(r)
 			if err != nil {
@@ -121,7 +137,7 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 	}
 
 	client := Client{
-		HttpClient: mockHttpClient,
+		HttpClient: stubHttpClient,
 		BaseUrl:    url,
 	}
 
@@ -184,12 +200,12 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 		{http.StatusBadRequest, "", ErrBadRequest},
 	}
 
-	for _, c := range checks {
+	for idx, c := range checks {
 		err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
 		if c.ExpectedError == nil {
-			assert.NoError(t, err)
+			assert.NoErrorf(t, err, "was NOT expecting error on test #%d: %v", idx, err)
 		} else {
-			assert.ErrorIs(t, err, c.ExpectedError)
+			assert.ErrorIsf(t, err, c.ExpectedError, "was expecting error [%v] on test #%d, got [%v] instead", c.ExpectedError, idx, err)
 		}
 	}
 }

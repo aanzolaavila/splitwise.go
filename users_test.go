@@ -9,6 +9,7 @@ import (
 
 	"github.com/aanzolaavila/splitwise.go/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const currentUser200Resp = `
@@ -104,7 +105,7 @@ func Test_GetUser_200Response(t *testing.T) {
 	ctx := context.Background()
 
 	user, err := client.GetUser(ctx, 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, resources.UserID(0), user.ID)
 	assert.Equal(t, "Ada", user.FirstName)
@@ -129,8 +130,6 @@ func Test_UpdateUser(t *testing.T) {
 	const userID = resources.UserID(15)
 
 	client, cancel := testClientWithHandler(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, http.MethodPost, r.Method)
-
 		input := struct {
 			Firstname       string `json:"first_name"`
 			Lastname        string `json:"last_name"`
@@ -141,17 +140,11 @@ func Test_UpdateUser(t *testing.T) {
 		}{}
 
 		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+		require.NoError(t, err)
 		defer r.Body.Close()
 
 		err = json.Unmarshal(body, &input)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+		require.NoError(t, err)
 
 		userRes := resources.User{
 			ID:        userID,
@@ -168,10 +161,7 @@ func Test_UpdateUser(t *testing.T) {
 		}
 
 		res, err := json.Marshal(cont)
-		if err != nil {
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
+		require.NoError(t, err)
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(res)
@@ -187,7 +177,7 @@ func Test_UpdateUser(t *testing.T) {
 		UserLastname:  lastname,
 	})
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, firstname, user.FirstName)

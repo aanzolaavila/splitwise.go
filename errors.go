@@ -13,25 +13,30 @@ type SplitwiseError uint16
 
 func (e SplitwiseError) String() string {
 	switch e {
-	case http.StatusOK:
-		return "Request was unsuccessful"
-	case http.StatusBadRequest:
-		return "Bad request"
-	case http.StatusUnauthorized:
-		return "Invalid API request: you are not logged in"
-	case http.StatusForbidden:
-		return "Invalid API request: you do not have permission to perform that action"
-	case http.StatusNotFound:
-		return "Invalid API Request: record not found"
-	case http.StatusInternalServerError:
-		return "Internal Server Error"
+	case ErrInvalidParameter:
+		return "invalid parameter"
+	case ErrUnsuccessful:
+		return "request was unsuccessful"
+	case ErrBadRequest:
+		return "bad request"
+	case ErrNotLoggedIn:
+		return "invalid API request: you are not logged in"
+	case ErrForbidden:
+		return "invalid API request: you do not have permission to perform that action"
+	case ErrNotFound:
+		return "invalid API Request: record not found"
+	case ErrSplitwiseServer:
+		return "internal Server Error"
 	default:
-		return "Unknown error"
+		return "unknown error"
 	}
 }
 
 func (e SplitwiseError) Error() string {
-	return fmt.Sprintf("status code %d: %s", e, e.String())
+	if e != ErrInvalidParameter {
+		return fmt.Sprintf("status code %d: %s", e, e.String())
+	}
+	return e.String()
 }
 
 func (e SplitwiseError) Is(target error) bool {
@@ -43,6 +48,7 @@ func (e SplitwiseError) Is(target error) bool {
 }
 
 const (
+	ErrInvalidParameter SplitwiseError = 0
 	// Splitwise responds 200s on some erroneous requests
 	ErrUnsuccessful    SplitwiseError = http.StatusOK
 	ErrBadRequest      SplitwiseError = http.StatusBadRequest

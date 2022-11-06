@@ -54,7 +54,7 @@ func (c *Client) CreateExpenseComment(ctx context.Context, expenseId int, conten
 	const basePath = "/create_comment"
 
 	if content == "" {
-		return resources.Comment{}, fmt.Errorf("content cannot be empty")
+		return resources.Comment{}, fmt.Errorf("%w: content cannot be empty", ErrInvalidParameter)
 	}
 
 	bodyParams := make(map[string]interface{})

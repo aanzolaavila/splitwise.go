@@ -41,14 +41,14 @@ func getAndCheckIntExpensesParam(params ExpensesParams, key expensesParam) (stri
 		strValue, ok := value.(string)
 		if ok {
 			if _, err := strconv.Atoi(strValue); err != nil {
-				return "", fmt.Errorf("%s is not convertable to int: %w", key, err)
+				return "", fmt.Errorf("%w: %s is not convertable to int", ErrInvalidParameter, key)
 			}
 			return strValue, nil
 		}
 
 		intValue, ok := value.(int)
 		if !ok {
-			return "", fmt.Errorf("%s is not an int", key)
+			return "", fmt.Errorf("%w: %s is not an int", ErrInvalidParameter, key)
 		}
 		return strconv.Itoa(intValue), nil
 	}
@@ -68,13 +68,13 @@ func getAndCheckDateExpensesParam(params ExpensesParams, key expensesParam) (str
 		strValue, ok := value.(string)
 		if ok {
 			if _, err := time.Parse(timeFormat, strValue); err != nil {
-				return "", fmt.Errorf("%s does not have [%s] format", key, timeFormat)
+				return "", fmt.Errorf("%w: %s does not have [%s] format", ErrInvalidParameter, key, timeFormat)
 			}
 
 			return strValue, nil
 		}
 
-		return "", fmt.Errorf("%s is not a string nor a date", key)
+		return "", fmt.Errorf("%w: %s is not a string nor a date", ErrInvalidParameter, key)
 	}
 
 	return "", nil
@@ -186,7 +186,7 @@ func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64,
 	const basePath = "/create_expense"
 
 	if cost == 0.0 || description == "" {
-		return nil, fmt.Errorf("cost and description must be non-empty")
+		return nil, fmt.Errorf("%w: cost and description must be non-empty", ErrInvalidParameter)
 	}
 
 	m := make(map[string]interface{})
@@ -236,7 +236,7 @@ func addExpenseUserParamsToMap(idx int, u ExpenseUser, m map[string]interface{})
 	const format = "users__%d__%s"
 
 	if u.Id == 0 && u.Email == "" {
-		return fmt.Errorf("id or email is required for the user: %+v", u)
+		return fmt.Errorf("%w: id or email is required for the user", ErrInvalidParameter)
 	}
 
 	if v := strconv.Itoa(int(u.Id)); u.Id != 0 {
@@ -276,7 +276,7 @@ func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, descri
 	const basePath = "/create_expense"
 
 	if cost == 0.0 || description == "" {
-		return nil, fmt.Errorf("cost and description must be non-empty")
+		return nil, fmt.Errorf("%w: cost and description must be non-empty", ErrInvalidParameter)
 	}
 
 	m := make(map[string]interface{})
@@ -325,7 +325,7 @@ func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, descri
 	path := fmt.Sprintf("%s/%d", basePath, id)
 
 	if cost == 0.0 || description == "" {
-		return nil, fmt.Errorf("cost and description must be non-empty")
+		return nil, fmt.Errorf("%w: cost and description must be non-empty", ErrInvalidParameter)
 	}
 
 	m := make(map[string]interface{})

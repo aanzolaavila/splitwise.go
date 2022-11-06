@@ -7,6 +7,7 @@ import (
 
 	"github.com/aanzolaavila/splitwise.go/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const notificationsSuccessResponse = `
@@ -39,9 +40,9 @@ func Test_GetNotifications_SanityCheck(t *testing.T) {
 	nots, err := client.GetNotifications(ctx, NotificationsParams{
 		NotificationsLimit: 100,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Len(t, nots, 1)
+	require.Len(t, nots, 1)
 
 	not := nots[0]
 	assert.Equal(t, resources.NotificationID(32514315), not.ID)

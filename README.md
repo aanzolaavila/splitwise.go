@@ -14,7 +14,7 @@ $ go get -u github.com/aanzolaavila/splitwise.go
 
    You can either use [`ApiKeyAuth`](https://dev.splitwise.com/#section/Authentication/ApiKeyAuth), recommended for testing.
 
-   Or, you can use the much more secure option with [OAuth](https://dev.splitwise.com/#section/Authentication/OAuth), you can find an example on how to set it up in [this example](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L23).
+   Or, you can use the much more secure option with [OAuth](https://dev.splitwise.com/#section/Authentication/OAuth), in [this example](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L23) you can see how you can set it up.
 
 ## Examples
 Get your app credentials, to use the examples, you can run them like this
