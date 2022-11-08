@@ -121,6 +121,9 @@ func extractErrorsFromBody(body []byte) error {
 	errs = extractErrorsBase(body)
 	s = append(s, errs...)
 
+	errs = extractPropertyErrorStruct(body)
+	s = append(s, errs...)
+
 	if len(s) == 1 {
 		return errors.New(s[0])
 	}
@@ -163,4 +166,20 @@ func extractSigleError(body []byte) string {
 	_ = json.Unmarshal(body, &e)
 
 	return e.Error
+}
+
+func extractPropertyErrorStruct(body []byte) (es []string) {
+	e := struct {
+		Errors map[string][]string `json:"errors"`
+	}{}
+
+	_ = json.Unmarshal(body, &e)
+
+	for k, v := range e.Errors {
+		errs := strings.Join(v, ", ")
+		err := fmt.Sprintf("property \"%s\" got errors: [ %s ]", k, errs)
+		es = append(es, err)
+	}
+
+	return
 }

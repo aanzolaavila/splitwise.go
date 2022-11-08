@@ -182,17 +182,15 @@ func (c *Client) AddFriends(ctx context.Context, friends []FriendUser) ([]resour
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return nil, err
-	}
-
 	var container friendUsersContainer
 	err = json.Unmarshal(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
 
-	return container.Users, nil
+	err = c.getErrorFromResponse(res, rawBody)
+
+	return container.Users, err
 }
 
 func (c *Client) DeleteFriend(ctx context.Context, id int) error {
