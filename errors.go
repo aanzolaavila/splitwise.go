@@ -75,18 +75,24 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 		defer res.Body.Close()
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return SplitwiseError(res.StatusCode)
-	}
-
 	err := extractErrorsFromBody(rawBody)
-	if err != nil {
-		return fmt.Errorf("got error %w: %s", ErrUnsuccessful, err.Error())
-	}
-
 	sv := extractSuccessValue(rawBody)
-	if sv != nil && !*sv {
-		return ErrUnsuccessful
+	failed := sv != nil && !*sv
+
+	failure := res.StatusCode != http.StatusOK
+	failure = failure || err != nil
+	failure = failure || failed
+
+	if failure {
+		if err != nil {
+			return fmt.Errorf("%w: %s", SplitwiseError(res.StatusCode), err.Error())
+		}
+
+		if failed {
+			return fmt.Errorf("%w: there was no error in response", SplitwiseError(res.StatusCode))
+		}
+
+		return SplitwiseError(res.StatusCode)
 	}
 
 	return nil
