@@ -107,35 +107,60 @@ func extractSuccessValue(body []byte) *bool {
 	return s.Success
 }
 
-type errorMap struct {
-	Error  string `json:"error"`
-	Errors struct {
-		Base []string `json:"base"`
-	} `json:"errors"`
-}
-
-type errorsListMap struct {
-	Errors []string `json:"errors"`
-}
-
 func extractErrorsFromBody(body []byte) error {
-	var errSlice errorsListMap
-	var errMap errorMap
+	var s []string
 
-	_ = json.Unmarshal(body, &errMap)
-	_ = json.Unmarshal(body, &errSlice)
-
-	if errMap.Error != "" {
-		return errors.New(errMap.Error)
+	e := extractSigleError(body)
+	if e != "" {
+		s = append(s, e)
 	}
 
-	s := errSlice.Errors
-	s = append(s, errMap.Errors.Base...)
+	errs := extractErrorList(body)
+	s = append(s, errs...)
 
-	if len(s) > 0 {
-		errs := strings.Join(s, ", ")
-		return fmt.Errorf("multiple errors: %s", errs)
+	errs = extractErrorsBase(body)
+	s = append(s, errs...)
+
+	if len(s) == 1 {
+		return errors.New(s[0])
+	}
+
+	if len(s) > 1 {
+		es := strings.Join(s, ", ")
+		return fmt.Errorf("errors: [ %s ]", es)
 	}
 
 	return nil
+}
+
+func extractErrorList(body []byte) []string {
+	e := struct {
+		Errors []string `json:"errors"`
+	}{}
+
+	_ = json.Unmarshal(body, &e)
+
+	return e.Errors
+}
+
+func extractErrorsBase(body []byte) []string {
+	e := struct {
+		Errors struct {
+			Base []string `json:"base"`
+		} `json:"errors"`
+	}{}
+
+	_ = json.Unmarshal(body, &e)
+
+	return e.Errors.Base
+}
+
+func extractSigleError(body []byte) string {
+	e := struct {
+		Error string `json:"error"`
+	}{}
+
+	_ = json.Unmarshal(body, &e)
+
+	return e.Error
 }
