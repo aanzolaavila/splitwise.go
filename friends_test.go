@@ -149,11 +149,15 @@ func Test_GetFriend_BasicErrorTests(t *testing.T) {
 }
 
 func Test_CreateFriend(t *testing.T) {
-	const friendEmail = "test@email.com"
-	const friendFirstname = "Test"
-	const friendLastname = "Testing"
+	require := require.New(t)
+	assert := assert.New(t)
 
-	const friendId = resources.FriendID(150)
+	const (
+		friendEmail     = "test@email.com"
+		friendFirstname = "Test"
+		friendLastname  = "Testing"
+		friendId        = resources.FriendID(150)
+	)
 
 	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in := struct {
@@ -163,18 +167,18 @@ func Test_CreateFriend(t *testing.T) {
 		}{}
 
 		rawBody, err := io.ReadAll(r.Body)
-		require.NoError(t, err)
+		require.NoError(err)
 
 		err = json.Unmarshal(rawBody, &in)
-		require.NoError(t, err)
+		require.NoError(err)
 
-		require.NotNil(t, in.Email)
-		require.NotNil(t, in.Firstname)
-		require.NotNil(t, in.Lastname)
+		require.NotNil(in.Email)
+		require.NotNil(in.Firstname)
+		require.NotNil(in.Lastname)
 
-		assert.Equal(t, friendEmail, *in.Email)
-		assert.Equal(t, friendFirstname, *in.Firstname)
-		assert.Equal(t, friendLastname, *in.Lastname)
+		assert.Equal(friendEmail, *in.Email)
+		assert.Equal(friendFirstname, *in.Firstname)
+		assert.Equal(friendLastname, *in.Lastname)
 
 		c := struct {
 			Friend resources.Friend `json:"friend"`
@@ -188,7 +192,7 @@ func Test_CreateFriend(t *testing.T) {
 		}
 
 		res, err := json.Marshal(c)
-		require.NoError(t, err)
+		require.NoError(err)
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(res)
@@ -200,12 +204,12 @@ func Test_CreateFriend(t *testing.T) {
 		FriendFirstname: friendFirstname,
 		FriendLastname:  friendLastname,
 	})
-	require.NoError(t, err)
+	require.NoError(err)
 
-	assert.Equal(t, friendId, f.ID)
-	assert.Equal(t, friendEmail, f.Email)
-	assert.Equal(t, friendFirstname, f.FirstName)
-	assert.Equal(t, friendLastname, f.LastName)
+	assert.Equal(friendId, f.ID)
+	assert.Equal(friendEmail, f.Email)
+	assert.Equal(friendFirstname, f.FirstName)
+	assert.Equal(friendLastname, f.LastName)
 }
 
 func Test_AddFriend_EmailCannotEmpty(t *testing.T) {
