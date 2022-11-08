@@ -76,22 +76,17 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 	}
 
 	err := extractErrorsFromBody(rawBody)
+
+	if err != nil {
+		return fmt.Errorf("%w: %s", SplitwiseError(res.StatusCode), err.Error())
+	}
+
 	sv := extractSuccessValue(rawBody)
-	failed := sv != nil && !*sv
+	if sv != nil && !*sv {
+		return fmt.Errorf("%w: there was no error in response", SplitwiseError(res.StatusCode))
+	}
 
-	failure := res.StatusCode != http.StatusOK
-	failure = failure || err != nil
-	failure = failure || failed
-
-	if failure {
-		if err != nil {
-			return fmt.Errorf("%w: %s", SplitwiseError(res.StatusCode), err.Error())
-		}
-
-		if failed {
-			return fmt.Errorf("%w: there was no error in response", SplitwiseError(res.StatusCode))
-		}
-
+	if res.StatusCode != http.StatusOK {
 		return SplitwiseError(res.StatusCode)
 	}
 
