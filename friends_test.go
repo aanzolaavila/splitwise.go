@@ -415,3 +415,36 @@ func Test_AddFriends_200ResponseWithErrorsShouldFail(t *testing.T) {
 	assert.Equal(friendLastname, f.LastName)
 	assert.Equal(friendEmail, f.Email)
 }
+
+func Test_AddFriends_ShouldFailIfEmailIsMissing(t *testing.T) {
+	assert := assert.New(t)
+
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+
+	users := []FriendUser{
+		{Firstname: "Test"},
+	}
+
+	fs, err := client.AddFriends(ctx, users)
+	assert.ErrorIs(err, ErrInvalidParameter)
+	assert.Empty(fs)
+}
+
+func Test_AddFriends_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		users := []FriendUser{
+			{Email: "test@mail.com"},
+			{Email: "test@mail.com"},
+			{Email: "test@mail.com"},
+		}
+
+		_, err := client.AddFriends(ctx, users)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}

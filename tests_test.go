@@ -173,8 +173,8 @@ func doFaultyResponseBodyTest(t *testing.T, f func(Client) error) {
 }
 
 const (
+	emptyJsonResponse  = `{}`
 	successResponse    = `{ "success": true }`
-	successResponse2   = `{}`
 	noSuccessResponse  = `{ "success": false }`
 	errorResponse      = `{ "error": "one error" }`
 	errorsResponse     = `{ "errors": ["err 1", "err 2"] }`
@@ -188,16 +188,16 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 		ExpectedError error
 	}{
 		{http.StatusOK, successResponse, nil},
-		{http.StatusOK, successResponse2, nil},
+		{http.StatusOK, emptyJsonResponse, nil},
 		{http.StatusOK, noSuccessResponse, ErrUnsuccessful},
 		{http.StatusOK, errorResponse, ErrUnsuccessful},
 		{http.StatusOK, errorsResponse, ErrUnsuccessful},
 		{http.StatusOK, errorsBaseResponse, ErrUnsuccessful},
-		{http.StatusNotFound, "", ErrNotFound},
-		{http.StatusUnauthorized, "", ErrNotLoggedIn},
-		{http.StatusForbidden, "", ErrForbidden},
-		{http.StatusInternalServerError, "", ErrSplitwiseServer},
-		{http.StatusBadRequest, "", ErrBadRequest},
+		{http.StatusNotFound, emptyJsonResponse, ErrNotFound},
+		{http.StatusUnauthorized, emptyJsonResponse, ErrNotLoggedIn},
+		{http.StatusForbidden, emptyJsonResponse, ErrForbidden},
+		{http.StatusInternalServerError, emptyJsonResponse, ErrSplitwiseServer},
+		{http.StatusBadRequest, emptyJsonResponse, ErrBadRequest},
 	}
 
 	for idx, c := range checks {
