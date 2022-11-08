@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Error400Response(t *testing.T) {
@@ -223,4 +224,56 @@ func Test_4XXResponse_ShouldFailIfInvalidBody(t *testing.T) {
 	err = client.getErrorFromResponse(res, nil)
 	assert.Error(t, err)
 	assert.ErrorIs(t, ErrNotFound, err)
+}
+
+func Test_200ResponseWithPropertyNamedStruct(t *testing.T) {
+	const response = `
+{
+"errors": {
+    "property1": [
+      "string"
+    ],
+    "property2": [
+      "string",
+      "string"
+    ]
+  }
+}
+`
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, response)
+	defer cancel()
+
+	ctx := context.Background()
+
+	res, err := client.do(ctx, http.MethodGet, "/", nil, nil)
+	assert.NoError(t, err)
+
+	err = client.getErrorFromResponse(res, nil)
+	assert.ErrorIs(t, err, ErrUnsuccessful)
+}
+
+func Test_IfResponseIsNot2XXButHasErrors_ItShouldAlsoIncludeThem(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	const (
+		e1 = "Error1"
+		e2 = "Error2"
+	)
+	const response = `
+{
+  "errors": ["Error1", "Error2"]
+}
+`
+	client, cancel := testClient(t, http.StatusBadRequest, http.MethodGet, response)
+	defer cancel()
+
+	ctx := context.Background()
+	res, err := client.do(ctx, http.MethodGet, "/", nil, nil)
+	require.NoError(err)
+
+	err = client.getErrorFromResponse(res, nil)
+	assert.ErrorIs(err, ErrBadRequest)
+	assert.True(strings.Contains(err.Error(), e1))
+	assert.True(strings.Contains(err.Error(), e2))
 }
