@@ -230,3 +230,188 @@ func Test_AddFriend_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+const addFriends200Response = `
+{
+  "users": [
+    {
+      "id": 26,
+      "first_name": "Ada",
+      "last_name": "Lovelace",
+      "email": "ada@example.com",
+      "registration_status": "confirmed",
+      "picture": {
+        "small": "string",
+        "medium": "string",
+        "large": "string"
+      },
+      "groups": [
+        {
+          "group_id": 571,
+          "balance": [
+            {
+              "currency_code": "USD",
+              "amount": "414.5"
+            }
+          ]
+        }
+      ],
+      "balance": [
+        {
+          "currency_code": "USD",
+          "amount": "414.5"
+        }
+      ],
+      "updated_at": "2019-08-24T14:15:22Z"
+    }
+  ]
+}
+`
+
+func Test_AddFriends_SanityCheck(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	const (
+		friendFirstname = "Ada"
+		friendLastname  = "Lovelace"
+		friendEmail     = "ada@example.com"
+	)
+
+	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := struct {
+			Firstname *string `json:"friends__0__first_name"`
+			Lastname  *string `json:"friends__0__last_name"`
+			Email     *string `json:"friends__0__email"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.NotNil(in.Firstname)
+		require.NotNil(in.Lastname)
+		require.NotNil(in.Email)
+
+		require.Equal(friendFirstname, *in.Firstname)
+		require.Equal(friendLastname, *in.Lastname)
+		require.Equal(friendEmail, *in.Email)
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(addFriends200Response))
+	}))
+	defer cancel()
+
+	ctx := context.Background()
+
+	users := []FriendUser{
+		{
+			Email:     friendEmail,
+			Firstname: friendFirstname,
+			Lastname:  friendLastname,
+		},
+	}
+
+	fs, err := client.AddFriends(ctx, users)
+	assert.NoError(err)
+
+	require.Len(fs, 1)
+
+	f := fs[0]
+	assert.Equal(resources.UserID(26), f.ID)
+	assert.Equal(friendEmail, f.Email)
+	assert.Equal(friendFirstname, f.FirstName)
+	assert.Equal(friendLastname, f.LastName)
+}
+
+func Test_AddFriends_ShouldFailIfNoFriends(t *testing.T) {
+	ctx := context.Background()
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	_, err := client.AddFriends(ctx, nil)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	_, err = client.AddFriends(ctx, []FriendUser{})
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+}
+
+const addFriends200ResponseWithErrors = `
+{
+  "users": [
+    {
+      "id": 30,
+      "first_name": "Ada",
+      "last_name": "Lovelace",
+      "email": "ada@example.com",
+      "registration_status": "confirmed",
+      "picture": {
+        "small": "string",
+        "medium": "string",
+        "large": "string"
+      },
+      "groups": [
+        {
+          "group_id": 571,
+          "balance": [
+            {
+              "currency_code": "USD",
+              "amount": "414.5"
+            }
+          ]
+        }
+      ],
+      "balance": [
+        {
+          "currency_code": "USD",
+          "amount": "414.5"
+        }
+      ],
+      "updated_at": "2019-08-24T14:15:22Z"
+    }
+  ],
+  "errors": {
+    "property1": [
+      "string"
+    ],
+    "property2": [
+      "string"
+    ]
+  }
+}
+`
+
+func Test_AddFriends_200ResponseWithErrorsShouldFail(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	const (
+		friendFirstname = "Ada"
+		friendLastname  = "Lovelace"
+		friendEmail     = "ada@example.com"
+	)
+
+	client, cancel := testClient(t, http.StatusOK, http.MethodPost, addFriends200ResponseWithErrors)
+	defer cancel()
+
+	ctx := context.Background()
+
+	users := []FriendUser{
+		{Email: friendEmail},
+	}
+
+	fs, err := client.AddFriends(ctx, users)
+
+	assert.Error(err)
+	assert.ErrorIs(err, ErrUnsuccessful)
+
+	require.Len(fs, 1)
+	f := fs[0]
+	assert.Equal(resources.UserID(30), f.ID)
+	assert.Equal(friendFirstname, f.FirstName)
+	assert.Equal(friendLastname, f.LastName)
+	assert.Equal(friendEmail, f.Email)
+}

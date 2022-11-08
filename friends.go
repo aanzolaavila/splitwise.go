@@ -159,6 +159,10 @@ func addFriendUserParamsToMap(idx int, f FriendUser, m map[string]interface{}) e
 func (c *Client) AddFriends(ctx context.Context, friends []FriendUser) ([]resources.User, error) {
 	const basePath = "/create_friends"
 
+	if len(friends) == 0 {
+		return nil, fmt.Errorf("%w: there must be at least one friend to add", ErrInvalidParameter)
+	}
+
 	bodyParams := make(map[string]interface{})
 
 	for idx, f := range friends {
