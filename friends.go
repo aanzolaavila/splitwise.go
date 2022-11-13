@@ -36,13 +36,13 @@ func (c *Client) GetFriends(ctx context.Context) ([]resources.Friend, error) {
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return nil, err
-	}
-
 	var container friendsContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
@@ -65,13 +65,13 @@ func (c *Client) GetFriend(ctx context.Context, id int) (resources.Friend, error
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Friend{}, err
-	}
-
 	var container friendContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Friend{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Friend{}, err
 	}
 
@@ -111,13 +111,13 @@ func (c *Client) AddFriend(ctx context.Context, email string, params FriendParam
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Friend{}, err
-	}
-
 	var container friendContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Friend{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Friend{}, err
 	}
 

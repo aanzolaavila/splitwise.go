@@ -36,13 +36,13 @@ func (c *Client) GetExpenseComments(ctx context.Context, expenseId int) ([]resou
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return nil, err
-	}
-
 	var container commentsContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
@@ -71,13 +71,13 @@ func (c *Client) CreateExpenseComment(ctx context.Context, expenseId int, conten
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Comment{}, err
-	}
-
 	var container commentContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Comment{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Comment{}, err
 	}
 
@@ -100,13 +100,13 @@ func (c *Client) DeleteExpenseComment(ctx context.Context, id int) (resources.Co
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Comment{}, err
-	}
-
 	var container commentContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Comment{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Comment{}, err
 	}
 

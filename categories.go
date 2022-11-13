@@ -26,13 +26,13 @@ func (c *Client) GetCategories(ctx context.Context) ([]resources.MainCategory, e
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return nil, err
-	}
-
 	var container categoriesContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 

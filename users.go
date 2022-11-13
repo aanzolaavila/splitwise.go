@@ -27,13 +27,13 @@ func (c *Client) GetCurrentUser(ctx context.Context) (resources.User, error) {
 	}
 	defer res.Body.Close()
 
-	err = c.getErrorFromResponse(res, rawBody)
+	var container userContainer
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.User{}, err
 	}
 
-	var container userContainer
-	err = c.unmarshal()(rawBody, &container)
+	err = c.getErrorFromResponse(res, rawBody)
 	if err != nil {
 		return resources.User{}, err
 	}
@@ -57,13 +57,13 @@ func (c *Client) GetUser(ctx context.Context, id int) (resources.User, error) {
 	}
 	defer res.Body.Close()
 
-	err = c.getErrorFromResponse(res, rawBody)
+	var container userContainer
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.User{}, err
 	}
 
-	var container userContainer
-	err = c.unmarshal()(rawBody, &container)
+	err = c.getErrorFromResponse(res, rawBody)
 	if err != nil {
 		return resources.User{}, err
 	}
@@ -104,13 +104,13 @@ func (c *Client) UpdateUser(ctx context.Context, id int, params UserParams) (res
 	}
 	defer res.Body.Close()
 
-	err = c.getErrorFromResponse(res, rawBody)
+	var container userContainer
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.User{}, err
 	}
 
-	var container userContainer
-	err = c.unmarshal()(rawBody, &container)
+	err = c.getErrorFromResponse(res, rawBody)
 	if err != nil {
 		return resources.User{}, err
 	}

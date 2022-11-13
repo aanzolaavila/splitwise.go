@@ -221,7 +221,7 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 	}
 
 	for i, c := range checks {
-		t.Run(fmt.Sprintf("%s:T%d", t.Name(), i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s:errorResponseTests:T%d", t.Name(), i), func(t *testing.T) {
 			err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
 			if c.ExpectedError == nil {
 				assert.NoErrorf(t, err, "was NOT expecting error on test #%d: %v", i, err)

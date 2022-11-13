@@ -116,6 +116,10 @@ func (c *Client) extractSuccessValue(body []byte) *bool {
 }
 
 func (c *Client) extractErrorsFromBody(body []byte) error {
+	if len(body) == 0 {
+		return nil
+	}
+
 	var s []string
 
 	e := c.extractSigleError(body)

@@ -26,13 +26,13 @@ func (c *Client) GetCurrencies(ctx context.Context) ([]resources.Currency, error
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return nil, err
-	}
-
 	var container currenciesContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
