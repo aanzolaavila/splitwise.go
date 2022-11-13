@@ -40,11 +40,86 @@ By default, the used library for marshaling and unmarshaling JSON is the native 
 
 For this you just need to point out the marshaling and unmarshaling methods like:
 ```go
+import (
+   	gojson "github.com/goccy/go-json"
+)
+
+// ...
+
 client.JsonMarshaler = gojson.Marshal
 client.JsonUnmarshaler = gojson.Unmarshal
 ```
+
+Both fields use different interfaces, which are the same as the ones in the standard Go library.
+```go
+type jsonMarshaler func(interface{}) ([]byte, error)
+type jsonUnmarshaler func([]byte, interface{}) error
+
+type Client struct {
+   // ...
+   JsonMarshaler   jsonMarshaler
+   JsonUnmarshaler jsonUnmarshaler
+}
+
+```
+
 See a concrete example [here](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L76-L78).
 
+### With custom logger
+You can specify your desired logger implementation, it just has to fulfill the following interface.
+```go
+type logger interface {
+	Printf(string, ...interface{})
+}
+```
+You can find an example in [here](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L81-L82).
+
+You can also use another logging solution such as [logrus](https://github.com/sirupsen/logrus). See this example for reference:
+```go
+import (
+   "log"
+
+   logrus "github.com/sirupsen/logrus"
+)
+
+// ...
+
+logger := logrus.New()
+logger.Formatter = &logrus.JSONFormatter{}
+
+// Use logrus for standard log output
+// Note that `log` here references stdlib's log
+// Not logrus imported under the name `log`.
+stdlog := log.New(os.Stdout, "", log.Lshortfile)
+stdlog.SetOutput(logger.Writer())
+
+splitwiseClient.Logger = stdlog
+```
+*Based from a logrus [example](https://github.com/sirupsen/logrus#logger-as-an-iowriter).*
+
+#### Disable logging
+If you wish to disable logging, you can do this
+```go
+import "log"
+
+// ...
+
+nopLogger := log.New(io.Discard, "", log.LstdFlags)
+splitwiseClient.Logger = nopLogger
+```
+
+Or you can implement a `nopLogger` struct that fulfills the logger interface
+```go
+type nopLogger struct {}
+
+func (l nopLogger) Printf(s string, args ...interface{}) {
+   return // nothing to do here
+}
+
+// ...
+
+splitwiseClient.Logger = nopLogger
+```
 
 ## How to collaborate?
 You can create a PR to this repo for corrections or improvements. One of the main guidelines for approving them is that all tests must pass.

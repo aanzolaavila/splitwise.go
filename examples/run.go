@@ -77,6 +77,10 @@ func main() {
 	client.JsonMarshaler = gojson.Marshal
 	client.JsonUnmarshaler = gojson.Unmarshal
 
+	// let's use a custom logger
+	logger := log.New(os.Stdout, "Splitwise LOG: ", log.Lshortfile)
+	client.Logger = logger
+
 	ctx := context.Background()
 
 	userExamples(ctx, client)
