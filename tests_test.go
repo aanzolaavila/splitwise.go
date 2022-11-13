@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type readCloserStub struct {
@@ -121,9 +122,7 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 	stubHttpClient := httpClientStub{
 		DoFunc: func(r *http.Request) (*http.Response, error) {
 			res, err := httpClient.Do(r)
-			if err != nil {
-				t.Fatalf("connection to mocked http server failed: %v", err)
-			}
+			require.NoError(t, err, "connection to mocked http server failed: %v")
 
 			reader := readCloserStub{
 				ReadFunc: func(p []byte) (n int, err error) {
@@ -131,6 +130,7 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 				},
 			}
 
+			res.Body.Close()
 			res.Body = reader
 			return res, nil
 		},
@@ -151,50 +151,45 @@ func doBasicErrorChecks(t *testing.T, f func(Client) error) {
 		panic("callback function is nil")
 	}
 
-	tests := []struct {
-		Name string
-		Func func(*testing.T, func(Client) error)
-	}{
-		{
-			Name: "doFaultyClientTest",
-			Func: doFaultyClientTest,
-		},
-		{
-			Name: "doFaultyResponseBodyTest",
-			Func: doFaultyResponseBodyTest,
-		},
-		{
-			Name: "doErrorResponseTests",
-			Func: doErrorResponseTests,
-		},
-		{
-			Name: "doInvalidJsonResponseErrorTest",
-			Func: doInvalidJsonResponseErrorTest,
-		},
-	}
-
-	for _, tf := range tests {
-		fnName := tf.Name
-		testName := t.Name()
-		t.Run(fmt.Sprintf("%s:%v", testName, fnName), func(t *testing.T) {
-			tf.Func(t, f)
-		})
-	}
+	doFaultyClientTest(t, f)
+	doFaultyResponseBodyTest(t, f)
+	doErrorResponseTests(t, f)
+	doInvalidJsonResponseErrorTest(t, f)
 }
 
 func doFaultyClientTest(t *testing.T, f func(Client) error) {
-	client, expectedErr := testClientWithFaultyResponse()
+	t.Run(fmt.Sprintf("%s:doFaultyClientTest", t.Name()), func(t *testing.T) {
+		client, expectedErr := testClientWithFaultyResponse()
 
-	err := f(client)
-	assert.ErrorIs(t, err, expectedErr)
+		err := f(client)
+		assert.ErrorIs(t, err, expectedErr)
+	})
 }
 
 func doFaultyResponseBodyTest(t *testing.T, f func(Client) error) {
-	client, expectedErr, cancel := testClientWithFaultyResponseBody(t, http.StatusOK)
-	defer cancel()
+	doFaultyResponseBodyTest4XXResponse_shouldFail(t, f)
+}
 
-	err := f(client)
-	assert.ErrorIs(t, err, expectedErr)
+func doFaultyResponseBodyTest4XXResponse_shouldFail(t *testing.T, f func(Client) error) {
+
+	errCodes := []int{
+		http.StatusBadRequest,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
+		http.StatusNotFound,
+		http.StatusInternalServerError,
+	}
+
+	for _, s := range errCodes {
+		t.Run(fmt.Sprintf("%s:doFaultyResponseBodyTest%dResponse_shouldFail", t.Name(), s), func(t *testing.T) {
+			client, _, cancel := testClientWithFaultyResponseBody(t, s)
+			defer cancel()
+
+			err := f(client)
+			assert.Error(t, err)
+		})
+	}
+
 }
 
 const (
@@ -245,12 +240,14 @@ func doErrorResponseTest(t *testing.T, f func(Client) error, statusCode int, bod
 }
 
 func doInvalidJsonResponseErrorTest(t *testing.T, f func(Client) error) {
-	const invalidJson = `{ invalid }`
-	client, cancel := testClient(t, http.StatusOK, "", invalidJson)
-	defer cancel()
+	t.Run(fmt.Sprintf("%s:doInvalidJsonResponseErrorTest", t.Name()), func(t *testing.T) {
+		const invalidJson = `{ invalid }`
+		client, cancel := testClient(t, http.StatusOK, "", invalidJson)
+		defer cancel()
 
-	err := f(client)
+		err := f(client)
 
-	var syntaxErr *json.SyntaxError
-	assert.ErrorAs(t, err, &syntaxErr)
+		var syntaxErr *json.SyntaxError
+		assert.ErrorAs(t, err, &syntaxErr)
+	})
 }

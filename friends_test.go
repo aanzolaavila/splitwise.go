@@ -448,3 +448,29 @@ func Test_AddFriends_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+func Test_DeleteFriend_SanityCheck(t *testing.T) {
+	const response = `
+{
+  "success": true,
+  "errors": []
+}
+`
+	client, cancel := testClient(t, http.StatusOK, http.MethodPost, response)
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.DeleteFriend(ctx, 0)
+	assert.NoError(t, err)
+}
+
+func Test_DeleteFriend_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.DeleteFriend(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
