@@ -59,10 +59,9 @@ const (
 )
 
 func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
-	var rawBody []byte = body
 	if body == nil {
 		var err error
-		rawBody, err = io.ReadAll(res.Body)
+		body, err = io.ReadAll(res.Body)
 		if err != nil {
 			if res.StatusCode == http.StatusOK {
 				c.getLogger().Printf("Warning: could not read from response body, but response status code is %d", res.StatusCode)
@@ -75,13 +74,15 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 		defer res.Body.Close()
 	}
 
-	err := extractErrorsFromBody(rawBody)
+	if err := checkJson(body); err != nil {
+		return err
+	}
 
-	if err != nil {
+	if err := extractErrorsFromBody(body); err != nil {
 		return fmt.Errorf("%w: %s", SplitwiseError(res.StatusCode), err.Error())
 	}
 
-	sv := extractSuccessValue(rawBody)
+	sv := extractSuccessValue(body)
 	if sv != nil && !*sv {
 		return fmt.Errorf("%w: there was no error in response", SplitwiseError(res.StatusCode))
 	}
@@ -91,6 +92,15 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 	}
 
 	return nil
+}
+
+func checkJson(body []byte) error {
+	if len(body) == 0 {
+		return nil
+	}
+
+	var j interface{}
+	return json.Unmarshal(body, &j)
 }
 
 type successMap struct {

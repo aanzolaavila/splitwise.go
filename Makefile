@@ -4,7 +4,7 @@ setup:
 
 .PHONY: tests
 test: setup
-	go test .
+	go test -count=1 .
 
 .PHONY: coverage
 coverage: setup

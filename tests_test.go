@@ -151,17 +151,42 @@ func doBasicErrorChecks(t *testing.T, f func(Client) error) {
 		panic("callback function is nil")
 	}
 
-	doFaultyClientTest(t, f)
-	doFaultyResponseBodyTest(t, f)
-	doErrorResponseTests(t, f)
-	doInvalidJsonResponseErrorTest(t, f)
+	tests := []struct {
+		Name string
+		Func func(*testing.T, func(Client) error)
+	}{
+		{
+			Name: "doFaultyClientTest",
+			Func: doFaultyClientTest,
+		},
+		{
+			Name: "doFaultyResponseBodyTest",
+			Func: doFaultyResponseBodyTest,
+		},
+		{
+			Name: "doErrorResponseTests",
+			Func: doErrorResponseTests,
+		},
+		{
+			Name: "doInvalidJsonResponseErrorTest",
+			Func: doInvalidJsonResponseErrorTest,
+		},
+	}
+
+	for _, tf := range tests {
+		fnName := tf.Name
+		testName := t.Name()
+		t.Run(fmt.Sprintf("%s:%v", testName, fnName), func(t *testing.T) {
+			tf.Func(t, f)
+		})
+	}
 }
 
 func doFaultyClientTest(t *testing.T, f func(Client) error) {
-	client, expectedError := testClientWithFaultyResponse()
+	client, expectedErr := testClientWithFaultyResponse()
 
 	err := f(client)
-	assert.ErrorIs(t, err, expectedError)
+	assert.ErrorIs(t, err, expectedErr)
 }
 
 func doFaultyResponseBodyTest(t *testing.T, f func(Client) error) {
@@ -200,13 +225,15 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 		{http.StatusBadRequest, emptyJsonResponse, ErrBadRequest},
 	}
 
-	for idx, c := range checks {
-		err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
-		if c.ExpectedError == nil {
-			assert.NoErrorf(t, err, "was NOT expecting error on test #%d: %v", idx, err)
-		} else {
-			assert.ErrorIsf(t, err, c.ExpectedError, "was expecting error [%v] on test #%d, got [%v] instead", c.ExpectedError, idx, err)
-		}
+	for i, c := range checks {
+		t.Run(fmt.Sprintf("%s:T%d", t.Name(), i), func(t *testing.T) {
+			err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
+			if c.ExpectedError == nil {
+				assert.NoErrorf(t, err, "was NOT expecting error on test #%d: %v", i, err)
+			} else {
+				assert.ErrorIsf(t, err, c.ExpectedError, "was expecting error [%v] on test #%d, got [%v] instead", c.ExpectedError, i, err)
+			}
+		})
 	}
 }
 

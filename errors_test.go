@@ -2,6 +2,7 @@ package splitwise
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -172,12 +173,28 @@ func Test_Error200SuccessResponse_ShouldNotFail(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func Test_200Response_InvalidJsonShouldNotFail(t *testing.T) {
+func Test_200Response_InvalidJsonShouldFail(t *testing.T) {
 	const error200ErroneousSuccessfulResponse = `
 {
   "success": true
 `
 	client, cancel := testClient(t, http.StatusOK, http.MethodGet, error200ErroneousSuccessfulResponse)
+	defer cancel()
+
+	ctx := context.Background()
+
+	res, err := client.do(ctx, http.MethodGet, "/", nil, nil)
+	assert.NoError(t, err)
+
+	err = client.getErrorFromResponse(res, nil)
+	assert.Error(t, err)
+
+	var syntaxErr *json.SyntaxError
+	assert.ErrorAs(t, err, &syntaxErr)
+}
+
+func Test_200Response_EmptyResponseShouldNotFail(t *testing.T) {
+	client, cancel := testClient(t, http.StatusOK, http.MethodGet, "")
 	defer cancel()
 
 	ctx := context.Background()
