@@ -1,13 +1,13 @@
 # Based on https://docs.codecov.com/docs
 
-name: API workflow
+name: Coverage
 
 on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Test python API
+    name: Splitwise Go coverage
     steps:
     - uses: actions/checkout@v1
 
