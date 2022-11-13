@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -42,7 +41,7 @@ func (c *Client) GetExpenseComments(ctx context.Context, expenseId int) ([]resou
 	}
 
 	var container commentsContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,7 @@ func (c *Client) CreateExpenseComment(ctx context.Context, expenseId int, conten
 	}
 
 	var container commentContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Comment{}, err
 	}
@@ -106,7 +105,7 @@ func (c *Client) DeleteExpenseComment(ctx context.Context, id int) (resources.Co
 	}
 
 	var container commentContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Comment{}, err
 	}

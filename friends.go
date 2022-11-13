@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -42,7 +41,7 @@ func (c *Client) GetFriends(ctx context.Context) ([]resources.Friend, error) {
 	}
 
 	var container friendsContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +70,7 @@ func (c *Client) GetFriend(ctx context.Context, id int) (resources.Friend, error
 	}
 
 	var container friendContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Friend{}, err
 	}
@@ -117,7 +116,7 @@ func (c *Client) AddFriend(ctx context.Context, email string, params FriendParam
 	}
 
 	var container friendContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Friend{}, err
 	}
@@ -183,7 +182,7 @@ func (c *Client) AddFriends(ctx context.Context, friends []FriendUser) ([]resour
 	defer res.Body.Close()
 
 	var container friendUsersContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}

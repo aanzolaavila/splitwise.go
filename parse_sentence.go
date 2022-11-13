@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -42,7 +41,7 @@ func (c *Client) parseSentenceIntoExpense(ctx context.Context, input string, aut
 	}
 
 	var parsedExpense resources.ParsedExpense
-	err = json.Unmarshal(rawBody, &parsedExpense)
+	err = c.unmarshal()(rawBody, &parsedExpense)
 	if err != nil {
 		return resources.ParsedExpense{}, err
 	}

@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -134,7 +133,7 @@ func (c *Client) GetExpenses(ctx context.Context, params ExpensesParams) ([]reso
 	}
 
 	var container expensesContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +162,7 @@ func (c *Client) GetExpense(ctx context.Context, id int) (resources.Expense, err
 	}
 
 	var container expenseContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Expense{}, err
 	}
@@ -215,7 +214,7 @@ func (c *Client) CreateExpenseEqualGroupSplit(ctx context.Context, cost float64,
 	}
 
 	var container expensesContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +310,7 @@ func (c *Client) CreateExpenseByShares(ctx context.Context, cost float64, descri
 	}
 
 	var container expensesContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +359,7 @@ func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, descri
 	}
 
 	var container expensesContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}

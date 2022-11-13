@@ -1,7 +1,6 @@
 package splitwise
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -74,15 +73,15 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 		defer res.Body.Close()
 	}
 
-	if err := checkJson(body); err != nil {
+	if err := c.checkJson(body); err != nil {
 		return err
 	}
 
-	if err := extractErrorsFromBody(body); err != nil {
+	if err := c.extractErrorsFromBody(body); err != nil {
 		return fmt.Errorf("%w: %s", SplitwiseError(res.StatusCode), err.Error())
 	}
 
-	sv := extractSuccessValue(body)
+	sv := c.extractSuccessValue(body)
 	if sv != nil && !*sv {
 		return fmt.Errorf("%w: there was no error in response", SplitwiseError(res.StatusCode))
 	}
@@ -94,22 +93,21 @@ func (c *Client) getErrorFromResponse(res *http.Response, body []byte) error {
 	return nil
 }
 
-func checkJson(body []byte) error {
+func (c *Client) checkJson(body []byte) error {
 	if len(body) == 0 {
 		return nil
 	}
 
 	var j interface{}
-	return json.Unmarshal(body, &j)
+	return c.unmarshal()(body, &j)
 }
 
-type successMap struct {
-	Success *bool `json:"success"`
-}
+func (c *Client) extractSuccessValue(body []byte) *bool {
+	var s struct {
+		Success *bool `json:"success"`
+	}
 
-func extractSuccessValue(body []byte) *bool {
-	var s successMap
-	err := json.Unmarshal(body, &s)
+	err := c.unmarshal()(body, &s)
 	if err != nil {
 		return nil
 	}
@@ -117,21 +115,21 @@ func extractSuccessValue(body []byte) *bool {
 	return s.Success
 }
 
-func extractErrorsFromBody(body []byte) error {
+func (c *Client) extractErrorsFromBody(body []byte) error {
 	var s []string
 
-	e := extractSigleError(body)
+	e := c.extractSigleError(body)
 	if e != "" {
 		s = append(s, e)
 	}
 
-	errs := extractErrorList(body)
+	errs := c.extractErrorList(body)
 	s = append(s, errs...)
 
-	errs = extractErrorsBase(body)
+	errs = c.extractErrorsBase(body)
 	s = append(s, errs...)
 
-	errs = extractPropertyErrorStruct(body)
+	errs = c.extractPropertyErrorStruct(body)
 	s = append(s, errs...)
 
 	if len(s) == 1 {
@@ -146,44 +144,44 @@ func extractErrorsFromBody(body []byte) error {
 	return nil
 }
 
-func extractErrorList(body []byte) []string {
+func (c *Client) extractErrorList(body []byte) []string {
 	e := struct {
 		Errors []string `json:"errors"`
 	}{}
 
-	_ = json.Unmarshal(body, &e)
+	_ = c.unmarshal()(body, &e)
 
 	return e.Errors
 }
 
-func extractErrorsBase(body []byte) []string {
+func (c *Client) extractErrorsBase(body []byte) []string {
 	e := struct {
 		Errors struct {
 			Base []string `json:"base"`
 		} `json:"errors"`
 	}{}
 
-	_ = json.Unmarshal(body, &e)
+	_ = c.unmarshal()(body, &e)
 
 	return e.Errors.Base
 }
 
-func extractSigleError(body []byte) string {
+func (c *Client) extractSigleError(body []byte) string {
 	e := struct {
 		Error string `json:"error"`
 	}{}
 
-	_ = json.Unmarshal(body, &e)
+	_ = c.unmarshal()(body, &e)
 
 	return e.Error
 }
 
-func extractPropertyErrorStruct(body []byte) (es []string) {
+func (c *Client) extractPropertyErrorStruct(body []byte) (es []string) {
 	e := struct {
 		Errors map[string][]string `json:"errors"`
 	}{}
 
-	_ = json.Unmarshal(body, &e)
+	_ = c.unmarshal()(body, &e)
 
 	for k, v := range e.Errors {
 		errs := strings.Join(v, ", ")

@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,7 +38,7 @@ func (c *Client) GetGroups(ctx context.Context) ([]resources.Group, error) {
 	}
 
 	var container groupsContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +67,7 @@ func (c *Client) GetGroup(ctx context.Context, id int) (resources.Group, error) 
 	}
 
 	var container groupContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Group{}, err
 	}
@@ -158,7 +157,7 @@ func (c *Client) CreateGroup(ctx context.Context, name string, params GroupParam
 	}
 
 	var container groupContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.Group{}, err
 	}

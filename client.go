@@ -15,6 +15,9 @@ import (
 const DefaultBaseUrl = "https://secure.splitwise.com"
 const DefaultApiVersionPath = "/api/v3.0"
 
+type jsonMarshaler func(interface{}) ([]byte, error)
+type jsonUnmarshaler func([]byte, interface{}) error
+
 type logger interface {
 	Printf(string, ...interface{})
 }
@@ -24,11 +27,13 @@ type httpClient interface {
 }
 
 type Client struct {
-	Logger         logger
-	HttpClient     httpClient
-	BaseUrl        string
-	ApiVersionPath string
-	Token          string
+	Logger          logger
+	HttpClient      httpClient
+	BaseUrl         string
+	ApiVersionPath  string
+	Token           string
+	JsonMarshaler   jsonMarshaler
+	JsonUnmarshaler jsonUnmarshaler
 }
 
 func defaultHttpClient() *http.Client {
@@ -51,6 +56,22 @@ func (c *Client) apiVersionPath() string {
 	}
 
 	return c.ApiVersionPath
+}
+
+func (c *Client) marshal() jsonMarshaler {
+	if c.JsonMarshaler == nil {
+		return json.Marshal
+	}
+
+	return c.JsonMarshaler
+}
+
+func (c *Client) unmarshal() jsonUnmarshaler {
+	if c.JsonUnmarshaler == nil {
+		return json.Unmarshal
+	}
+
+	return json.Unmarshal
 }
 
 func (c *Client) getHttpClient() httpClient {
@@ -77,8 +98,8 @@ func (c *Client) addRequiredHeaders(req *http.Request) {
 	req.Header.Add("Content-Type", "application/json")
 }
 
-func paramsToJsonBytesReader(params map[string]interface{}) (io.Reader, error) {
-	body, err := json.Marshal(params)
+func (c *Client) paramsToJsonBytesReader(params map[string]interface{}) (io.Reader, error) {
+	body, err := c.marshal()(params)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +117,7 @@ func (c *Client) do(ctx context.Context, method string, path string, queryParams
 
 	endpointUrl.RawQuery = queryParams.Encode()
 
-	bodyReader, err := paramsToJsonBytesReader(bodyParams)
+	bodyReader, err := c.paramsToJsonBytesReader(bodyParams)
 	if err != nil {
 		return nil, err
 	}

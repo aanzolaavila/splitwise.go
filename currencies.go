@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 
@@ -32,7 +31,7 @@ func (c *Client) GetCurrencies(ctx context.Context) ([]resources.Currency, error
 	}
 
 	var container currenciesContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}

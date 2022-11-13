@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,7 +33,7 @@ func (c *Client) GetCurrentUser(ctx context.Context) (resources.User, error) {
 	}
 
 	var container userContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.User{}, err
 	}
@@ -64,7 +63,7 @@ func (c *Client) GetUser(ctx context.Context, id int) (resources.User, error) {
 	}
 
 	var container userContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.User{}, err
 	}
@@ -111,7 +110,7 @@ func (c *Client) UpdateUser(ctx context.Context, id int, params UserParams) (res
 	}
 
 	var container userContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return resources.User{}, err
 	}

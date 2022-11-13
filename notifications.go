@@ -2,7 +2,6 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 
@@ -45,7 +44,7 @@ func (c *Client) GetNotifications(ctx context.Context, params NotificationsParam
 	}
 
 	var container notificationsContainer
-	err = json.Unmarshal(rawBody, &container)
+	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
 		return nil, err
 	}
