@@ -12,6 +12,8 @@ import (
 	"github.com/aanzolaavila/splitwise.go"
 	"github.com/aanzolaavila/splitwise.go/resources"
 	"golang.org/x/oauth2"
+
+	gojson "github.com/goccy/go-json"
 )
 
 func getTokenClient(token string) splitwise.Client {
@@ -70,6 +72,10 @@ func main() {
 	} else {
 		client = getOAuthClient()
 	}
+
+	// let's set a third party json library for increased performance
+	client.JsonMarshaler = gojson.Marshal
+	client.JsonUnmarshaler = gojson.Unmarshal
 
 	ctx := context.Background()
 

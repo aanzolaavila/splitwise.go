@@ -14,7 +14,7 @@ $ go get -u github.com/aanzolaavila/splitwise.go
 
    You can either use [`ApiKeyAuth`](https://dev.splitwise.com/#section/Authentication/ApiKeyAuth), recommended for testing.
 
-   Or, you can use the much more secure option with [OAuth](https://dev.splitwise.com/#section/Authentication/OAuth), in [this example](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L23) you can see how you can set it up.
+   Or, you can use the much more secure option with [OAuth](https://dev.splitwise.com/#section/Authentication/OAuth), in [this example](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L25) you can see how you can set it up.
 
 ## Examples
 Get your app credentials, to use the examples, you can run them like this
@@ -34,6 +34,17 @@ $ CLIENT_ID="<client-id>" CLIENT_SECRET="<client-secret>" make examples
 
 # copy YOUR_CODE into the terminal and it will execute the examples
 ```
+
+### With third party JSON library
+By default, the used library for marshaling and unmarshaling JSON is the native one, but in case you want to include another such as [go-json](https://github.com/goccy/go-json), [jsoniter](https://github.com/json-iterator/go), [sonic](https://github.com/bytedance/sonic), among others that might exist, you can specify another one.
+
+For this you just need to point out the marshaling and unmarshaling methods like:
+```go
+client.JsonMarshaler = gojson.Marshal
+client.JsonUnmarshaler = gojson.Unmarshal
+```
+See a concrete example [here](https://github.com/aanzolaavila/splitwise.go/blob/main/examples/run.go#L76-L78).
+
 
 ## How to collaborate?
 You can create a PR to this repo for corrections or improvements. One of the main guidelines for approving them is that all tests must pass.

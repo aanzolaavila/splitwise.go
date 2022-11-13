@@ -71,7 +71,7 @@ func (c *Client) unmarshal() jsonUnmarshaler {
 		return json.Unmarshal
 	}
 
-	return json.Unmarshal
+	return c.JsonUnmarshaler
 }
 
 func (c *Client) getHttpClient() httpClient {
