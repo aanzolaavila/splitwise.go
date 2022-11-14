@@ -294,3 +294,72 @@ func Test_IfResponseIsNot2XXButHasErrors_ItShouldAlsoIncludeThem(t *testing.T) {
 	assert.True(strings.Contains(err.Error(), e1))
 	assert.True(strings.Contains(err.Error(), e2))
 }
+
+func Test_Errors_ErrorList(t *testing.T) {
+	assert := assert.New(t)
+	const r = `
+{
+	"errors" : ["Error1", "Error2"]
+}
+	`
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	errs := client.extractErrorList([]byte(r))
+	require.Len(t, errs, 2)
+	assert.Equal("Error1", errs[0])
+	assert.Equal("Error2", errs[1])
+}
+
+func Test_ErrorsBase(t *testing.T) {
+	assert := assert.New(t)
+	const r = `
+{
+	"errors" : {
+		"base" : ["Error1", "Error2"]
+	}
+}
+	`
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	errs := client.extractErrorsBase([]byte(r))
+	require.Len(t, errs, 2)
+	assert.Equal("Error1", errs[0])
+	assert.Equal("Error2", errs[1])
+}
+
+func Test_SingleError(t *testing.T) {
+	assert := assert.New(t)
+	const r = `
+{
+	"error" : "Error"
+}
+	`
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	err := client.extractSigleError([]byte(r))
+	assert.Equal("Error", err)
+}
+
+func Test_PropertyErrorsStruct(t *testing.T) {
+	assert := assert.New(t)
+	const r = `
+{
+	"errors" : {
+		"property1" : ["Error1", "Error2"],
+		"property2" : ["Error3"]
+	}
+}
+	`
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	errs := client.extractPropertyErrorStruct([]byte(r))
+	require.Len(t, errs, 2)
+
+	assert.True(strings.Contains(errs[0], "property1"), "failed: %s", errs[0])
+	assert.True(strings.Contains(errs[0], "Error1"))
+	assert.True(strings.Contains(errs[0], "Error2"))
+
+	assert.True(strings.Contains(errs[1], "property2"))
+	assert.True(strings.Contains(errs[1], "Error3"))
+
+}
