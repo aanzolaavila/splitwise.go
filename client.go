@@ -36,12 +36,6 @@ type Client struct {
 	JsonUnmarshaler jsonUnmarshaler
 }
 
-func defaultHttpClient() *http.Client {
-	return &http.Client{
-		Timeout: 10 * time.Second,
-	}
-}
-
 func (c *Client) baseUrl() string {
 	if c.BaseUrl == "" {
 		return DefaultBaseUrl
@@ -76,7 +70,9 @@ func (c *Client) unmarshal() jsonUnmarshaler {
 
 func (c *Client) getHttpClient() httpClient {
 	if c.HttpClient == nil {
-		c.HttpClient = defaultHttpClient()
+		c.HttpClient = &http.Client{
+			Timeout: 10 * time.Second,
+		}
 	}
 
 	return c.HttpClient
