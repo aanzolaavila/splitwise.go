@@ -13,7 +13,7 @@ func (c *Client) parseSentenceIntoExpense(ctx context.Context, input string, aut
 	const path = "/parse_sentence"
 
 	if input == "" {
-		return resources.ParsedExpense{}, fmt.Errorf("input must not be empty")
+		return resources.ParsedExpense{}, fmt.Errorf("%w: input must not be empty", ErrInvalidParameter)
 	}
 
 	bodyParams := make(map[string]interface{})
@@ -35,13 +35,13 @@ func (c *Client) parseSentenceIntoExpense(ctx context.Context, input string, aut
 	}
 	defer res.Body.Close()
 
-	err = c.getErrorFromResponse(res, rawBody)
+	var parsedExpense resources.ParsedExpense
+	err = c.unmarshal()(rawBody, &parsedExpense)
 	if err != nil {
 		return resources.ParsedExpense{}, err
 	}
 
-	var parsedExpense resources.ParsedExpense
-	err = c.unmarshal()(rawBody, &parsedExpense)
+	err = c.getErrorFromResponse(res, rawBody)
 	if err != nil {
 		return resources.ParsedExpense{}, err
 	}
