@@ -62,13 +62,13 @@ func (c *Client) GetGroup(ctx context.Context, id int) (resources.Group, error) 
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Group{}, err
-	}
-
 	var container groupContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Group{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Group{}, err
 	}
 

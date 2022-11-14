@@ -2,6 +2,8 @@ package splitwise
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -98,6 +100,59 @@ func Test_GetGroups_BasicErrorChecks(t *testing.T) {
 		ctx := context.Background()
 		gs, err := client.GetGroups(ctx)
 		assert.Len(t, gs, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
+
+func Test_GetGroup(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	const (
+		groupID   = 50
+		groupName = "Testing"
+		groupType = "apartment"
+	)
+
+	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var gId int
+		path := r.URL.Path
+		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/get_group/%d", &gId)
+		require.NoError(err)
+
+		require.Equal(groupID, gId)
+
+		res := struct {
+			Group resources.Group `json:"group"`
+		}{
+			Group: resources.Group{
+				ID:   resources.GroupID(gId),
+				Name: groupName,
+				Type: groupType,
+			},
+		}
+
+		json.NewEncoder(w).Encode(res)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer cancel()
+
+	ctx := context.Background()
+	g, err := client.GetGroup(ctx, groupID)
+	require.NoError(err)
+
+	assert.Equal(resources.GroupID(groupID), g.ID)
+	assert.Equal(groupName, g.Name)
+	assert.Equal(groupType, g.Type)
+}
+
+func Test_GetGroup_BasicErrorChecks(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		_, err := client.GetGroup(ctx, 0)
 
 		return err
 	}
