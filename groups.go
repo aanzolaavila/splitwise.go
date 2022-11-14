@@ -94,7 +94,7 @@ func addGroupUserParamsToMap(idx int, u GroupUser, m map[string]interface{}) err
 	const format = "users__%d__%s"
 
 	if u.Id == 0 && u.Email == "" {
-		return fmt.Errorf("id or email is required for the user: %+v", u)
+		return fmt.Errorf("%w: id or email is required for the user: %+v", ErrInvalidParameter, u)
 	}
 
 	if v := strconv.Itoa(int(u.Id)); u.Id != 0 {
@@ -124,7 +124,7 @@ func (c *Client) CreateGroup(ctx context.Context, name string, params GroupParam
 	const basePath = "/create_group"
 
 	if name == "" {
-		return resources.Group{}, fmt.Errorf("name cannot be empty")
+		return resources.Group{}, fmt.Errorf("%w: name cannot be empty", ErrInvalidParameter)
 	}
 
 	bodyParams := make(map[string]interface{})
@@ -152,13 +152,13 @@ func (c *Client) CreateGroup(ctx context.Context, name string, params GroupParam
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Group{}, err
-	}
-
 	var container groupContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Group{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Group{}, err
 	}
 

@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/aanzolaavila/splitwise.go/resources"
@@ -158,4 +160,135 @@ func Test_GetGroup_BasicErrorChecks(t *testing.T) {
 	}
 
 	doBasicErrorChecks(t, f)
+}
+
+func Test_CreateGroup(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	const (
+		groupID        = 100
+		groupName      = "Test name"
+		groupType      = "trip"
+		user0ID        = 200
+		user0Firstname = "Testing"
+		user0Lastname  = "Testing"
+		user0Email     = "testing@test.com"
+		user1ID        = 5823
+	)
+
+	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var p string
+		path := r.URL.Path
+		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/%s", &p)
+		require.NoError(err)
+		require.Equal("create_group", p)
+
+		in := struct {
+			Name           string `json:"name"`
+			Type           string `json:"group_type"`
+			User0Firstname string `json:"users__0__first_name"`
+			User0Lastname  string `json:"users__0__last_name"`
+			User0Email     string `json:"users__0__email"`
+			User1ID        string `json:"users__1__id"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+		defer r.Body.Close()
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.Equal(groupName, in.Name)
+		require.Equal(groupType, in.Type)
+		require.Equal(user0Firstname, in.User0Firstname)
+		require.Equal(user0Lastname, in.User0Lastname)
+		require.Equal(user0Email, in.User0Email)
+		require.Equal(strconv.Itoa(user1ID), in.User1ID)
+
+		res := struct {
+			Group resources.Group `json:"group"`
+		}{
+			Group: resources.Group{
+				ID:   resources.GroupID(groupID),
+				Name: groupName,
+				Type: groupType,
+				Members: []resources.User{
+					{
+						ID:        resources.UserID(user0ID),
+						FirstName: user0Firstname,
+						LastName:  user0Lastname,
+						Email:     user0Email,
+					},
+					{
+						ID: resources.UserID(user1ID),
+					},
+				},
+			},
+		}
+
+		json.NewEncoder(w).Encode(res)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer cancel()
+
+	ctx := context.Background()
+	g, err := client.CreateGroup(ctx, groupName, GroupParams{
+		GroupType: groupType,
+	}, []GroupUser{
+		{
+			Firstname: user0Firstname,
+			Lastname:  user0Lastname,
+			Email:     user0Email,
+		},
+		{
+			Id: resources.UserID(user1ID),
+		},
+	})
+	require.NoError(err)
+
+	assert.Equal(resources.GroupID(groupID), g.ID)
+	assert.Equal(groupName, g.Name)
+	assert.Equal(groupType, g.Type)
+
+	require.Len(g.Members, 2)
+
+	mems := g.Members
+
+	assert.Equal(resources.UserID(user0ID), mems[0].ID)
+	assert.Equal(user0Firstname, mems[0].FirstName)
+	assert.Equal(user0Lastname, mems[0].LastName)
+	assert.Equal(user0Email, mems[0].Email)
+
+	assert.Equal(resources.UserID(user1ID), mems[1].ID)
+}
+
+func Test_CreateGroup_BasicErrorChecks(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		_, err := client.CreateGroup(ctx, "Test", nil, nil)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
+
+func Test_CreateGroup_EmptyNameProducesError(t *testing.T) {
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	_, err := client.CreateGroup(ctx, "", nil, nil)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+}
+
+func Test_CreateGroup_ShouldFailIfUserHasMistake(t *testing.T) {
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	_, err := client.CreateGroup(ctx, "Test", nil, []GroupUser{
+		{},
+	})
+	assert.ErrorIs(t, err, ErrInvalidParameter)
 }
