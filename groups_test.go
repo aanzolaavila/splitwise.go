@@ -327,3 +327,38 @@ func Test_DeleteGroup_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+func Test_RestoreGroup(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	const (
+		groupID = 500
+	)
+
+	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var gID int
+		path := r.URL.Path
+		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/undelete_group/%d", &gID)
+		require.NoError(err)
+		require.Equal(groupID, gID)
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.RestoreGroup(ctx, groupID)
+	assert.NoError(err)
+}
+
+func Test_RestoreGroup_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.RestoreGroup(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
