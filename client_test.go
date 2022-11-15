@@ -21,7 +21,7 @@ import (
 func Test_Client_IfTokenIsDefinedItShouldBeInHeader(t *testing.T) {
 	const testToken = "testtoken"
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 
 		if authHeader != fmt.Sprintf("Bearer %s", testToken) {
@@ -174,7 +174,7 @@ func Test_Client_Do_shouldFailIfMarshalingFails(t *testing.T) {
 }
 
 func Test_Client_Do_shouldFailIfRequestCannotBeCreated(t *testing.T) {
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("this should not have been reached")
 	}))
 	defer cancel()

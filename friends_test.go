@@ -159,7 +159,7 @@ func Test_CreateFriend(t *testing.T) {
 		friendId        = resources.FriendID(150)
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in := struct {
 			Email     *string `json:"user_email"`
 			Firstname *string `json:"user_first_name"`
@@ -278,7 +278,7 @@ func Test_AddFriends_SanityCheck(t *testing.T) {
 		friendEmail     = "ada@example.com"
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in := struct {
 			Firstname *string `json:"friends__0__first_name"`
 			Lastname  *string `json:"friends__0__last_name"`

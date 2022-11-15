@@ -203,7 +203,7 @@ func (c *Client) AddUserToGroupFromUserId(ctx context.Context, groupId, userId i
 	const path = "/add_user_to_group"
 
 	if groupId == 0 || userId == 0 {
-		return fmt.Errorf("group id and user id must be defined")
+		return fmt.Errorf("%w: group id and user id must be defined", ErrInvalidParameter)
 	}
 
 	bodyParams := map[string]interface{}{}

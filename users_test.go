@@ -129,7 +129,7 @@ func Test_GetUser_BasicErrorTests(t *testing.T) {
 func Test_UpdateUser(t *testing.T) {
 	const userID = resources.UserID(15)
 
-	client, cancel := testClientWithHandler(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
 		input := struct {
 			Firstname       string `json:"first_name"`
 			Lastname        string `json:"last_name"`

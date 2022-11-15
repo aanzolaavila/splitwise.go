@@ -91,7 +91,7 @@ func Test_CreateExpenseComments_SanityCheck(t *testing.T) {
 	const expenseId = 5123
 	const content = "Does this include the delivery fee?"
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
 
 		input := struct {

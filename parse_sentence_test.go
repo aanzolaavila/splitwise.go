@@ -172,7 +172,7 @@ func Test_ParseSentenceIntoExpenseWithFriend(t *testing.T) {
 		autosave  = true
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in := struct {
 			Input    string `json:"input"`
 			FriendID int    `json:"friend_id"`
@@ -236,7 +236,7 @@ func Test_ParseSentenceIntoExpenseWithGroup(t *testing.T) {
 		autosave  = true
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in := struct {
 			Input    string `json:"input"`
 			GroupID  int    `json:"group_id"`

@@ -1,11 +1,15 @@
 package splitwise
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,6 +49,29 @@ func (c httpClientStub) Do(r *http.Request) (*http.Response, error) {
 	return c.DoFunc(r)
 }
 
+type testLogger struct {
+	buf    bytes.Buffer
+	logger logger
+	once   sync.Once
+	T      *testing.T
+}
+
+func (l testLogger) Printf(s string, args ...interface{}) {
+	l.once.Do(func() {
+		tname := l.T.Name()
+		prefix := fmt.Sprintf("%s:: ", tname)
+		l.logger = log.New(io.Writer(&l.buf), prefix, log.LstdFlags)
+
+		l.T.Cleanup(func() {
+			if l.T.Failed() {
+				fmt.Print(l.buf.String())
+			}
+		})
+	})
+
+	l.logger.Printf(s, args...)
+}
+
 func testClient(t *testing.T, statusCode int, method, response string) (_ Client, cancel func()) {
 	server := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +87,9 @@ func testClient(t *testing.T, statusCode int, method, response string) (_ Client
 	client := Client{
 		HttpClient: server.Client(),
 		BaseUrl:    server.URL,
+		Logger: testLogger{
+			T: t,
+		},
 	}
 
 	return client, func() {
@@ -67,12 +97,15 @@ func testClient(t *testing.T, statusCode int, method, response string) (_ Client
 	}
 }
 
-func testClientWithHandler(handler http.HandlerFunc) (_ Client, cancel func()) {
+func testClientWithHandler(t *testing.T, handler http.HandlerFunc) (_ Client, cancel func()) {
 	server := httptest.NewServer(handler)
 
 	client := Client{
 		HttpClient: server.Client(),
 		BaseUrl:    server.URL,
+		Logger: testLogger{
+			T: t,
+		},
 	}
 
 	return client, func() {
@@ -91,10 +124,13 @@ func testClientThatFailsTestIfHttpIsCalled(t *testing.T) Client {
 	return Client{
 		HttpClient: stubClient,
 		BaseUrl:    "test.invalid.host",
+		Logger: testLogger{
+			T: t,
+		},
 	}
 }
 
-func testClientWithFaultyResponse() (Client, error) {
+func testClientWithFaultyResponse(t *testing.T) (Client, error) {
 	expectedError := errors.New("this error is expected")
 
 	stubClient := httpClientStub{
@@ -106,6 +142,9 @@ func testClientWithFaultyResponse() (Client, error) {
 	return Client{
 		HttpClient: stubClient,
 		BaseUrl:    "test.invalid.host",
+		Logger: testLogger{
+			T: t,
+		},
 	}, expectedError
 }
 
@@ -139,6 +178,9 @@ func testClientWithFaultyResponseBody(t *testing.T, statusCode int) (Client, err
 	client := Client{
 		HttpClient: stubHttpClient,
 		BaseUrl:    url,
+		Logger: testLogger{
+			T: t,
+		},
 	}
 
 	return client, expectedError, func() {
@@ -159,7 +201,7 @@ func doBasicErrorChecks(t *testing.T, f func(Client) error) {
 
 func doFaultyClientTest(t *testing.T, f func(Client) error) {
 	t.Run(fmt.Sprintf("%s:doFaultyClientTest", t.Name()), func(t *testing.T) {
-		client, expectedErr := testClientWithFaultyResponse()
+		client, expectedErr := testClientWithFaultyResponse(t)
 
 		err := f(client)
 		assert.ErrorIs(t, err, expectedErr)

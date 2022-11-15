@@ -119,7 +119,7 @@ func Test_GetGroup(t *testing.T) {
 		groupType = "apartment"
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var gId int
 		path := r.URL.Path
 		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/get_group/%d", &gId)
@@ -137,8 +137,8 @@ func Test_GetGroup(t *testing.T) {
 			},
 		}
 
-		json.NewEncoder(w).Encode(res)
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(res)
 	}))
 	defer cancel()
 
@@ -177,7 +177,7 @@ func Test_CreateGroup(t *testing.T) {
 		user1ID        = 5823
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var p string
 		path := r.URL.Path
 		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/%s", &p)
@@ -228,8 +228,8 @@ func Test_CreateGroup(t *testing.T) {
 			},
 		}
 
-		json.NewEncoder(w).Encode(res)
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(res)
 	}))
 	defer cancel()
 
@@ -301,7 +301,7 @@ func Test_DeleteGroup(t *testing.T) {
 		groupID = 500
 	)
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var gID int
 		path := r.URL.Path
 		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/delete_group/%d", &gID)
@@ -332,11 +332,9 @@ func Test_RestoreGroup(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	const (
-		groupID = 500
-	)
+	const groupID = 500
 
-	client, cancel := testClientWithHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	client, cancel := testClientWithHandler(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var gID int
 		path := r.URL.Path
 		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/undelete_group/%d", &gID)
@@ -356,6 +354,71 @@ func Test_RestoreGroup_BasicErrorTests(t *testing.T) {
 	f := func(client Client) error {
 		ctx := context.Background()
 		err := client.RestoreGroup(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
+
+func Test_AddUserToGroupFromUserId(t *testing.T) {
+	require := require.New(t)
+
+	const (
+		groupID = 100
+		userID  = 200
+	)
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		in := struct {
+			GroupID int `json:"group_id"`
+			UserID  int `json:"user_id"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.Equal(groupID, in.GroupID)
+		require.Equal(userID, in.UserID)
+
+		const res = `
+{
+  "success": true,
+  "user": {},
+  "errors": {}
+}`
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(res))
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.AddUserToGroupFromUserId(ctx, groupID, userID)
+	assert.NoError(t, err)
+}
+
+func Test_AddUserToGroupFromUserId_ShouldFailIfInvalidParameters(t *testing.T) {
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	err := client.AddUserToGroupFromUserId(ctx, 15, 0)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.AddUserToGroupFromUserId(ctx, 0, 15)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.AddUserToGroupFromUserId(ctx, 0, 0)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+}
+
+func Test_AddUserToGroupFromUserId_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.AddUserToGroupFromUserId(ctx, 15, 20)
 
 		return err
 	}
