@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 )
 
@@ -187,7 +188,15 @@ func (c *Client) extractPropertyErrorStruct(body []byte) (es []string) {
 
 	_ = c.unmarshal()(body, &e)
 
-	for k, v := range e.Errors {
+	// Ensures predictable order from map
+	var keys []string
+	for k := range e.Errors {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := e.Errors[k]
 		errs := strings.Join(v, ", ")
 		err := fmt.Sprintf("property \"%s\" got errors: [ %s ]", k, errs)
 		es = append(es, err)
