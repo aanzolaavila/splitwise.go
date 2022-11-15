@@ -425,3 +425,80 @@ func Test_AddUserToGroupFromUserId_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+func Test_AddUserToGroupFromUserInfo(t *testing.T) {
+	require := require.New(t)
+
+	const (
+		groupID   = 100
+		firstname = "Test"
+		lastname  = "Testing"
+		email     = "testing@test.com"
+	)
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		in := struct {
+			GroupID   int    `json:"group_id"`
+			Firstname string `json:"first_name"`
+			Lastname  string `json:"last_name"`
+			Email     string `json:"email"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.Equal(groupID, in.GroupID)
+		require.Equal(firstname, in.Firstname)
+		require.Equal(lastname, in.Lastname)
+		require.Equal(email, in.Email)
+
+		const res = `
+{
+  "success": true,
+  "user": {},
+  "errors": {}
+}`
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(res))
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.AddUserToGroupFromUserInfo(ctx, groupID, firstname, lastname, email)
+	assert.NoError(t, err)
+}
+
+func Test_AddUserToGroupFromUserInfo_ShouldFailIfInvalidParameters(t *testing.T) {
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	err := client.AddUserToGroupFromUserInfo(ctx, 0, "", "", "")
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.AddUserToGroupFromUserInfo(ctx, 0, "Test", "Testing", "testing@test.com")
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.AddUserToGroupFromUserInfo(ctx, 50, "", "Testing", "testing@test.com")
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.AddUserToGroupFromUserInfo(ctx, 50, "Test", "", "testing@test.com")
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.AddUserToGroupFromUserInfo(ctx, 50, "Test", "Testing", "")
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+}
+
+func Test_AddUserToGroupFromUserInfo_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.AddUserToGroupFromUserInfo(ctx, 50, "Test", "Testing", "testing@test.com")
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}

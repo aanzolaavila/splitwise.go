@@ -226,7 +226,7 @@ func (c *Client) AddUserToGroupFromUserInfo(ctx context.Context, groupId int, fi
 	const path = "/add_user_to_group"
 
 	if groupId == 0 || firstName == "" || lastName == "" || email == "" {
-		return fmt.Errorf("group id, firstname, lastname and email must be defined")
+		return fmt.Errorf("%w: group id, firstname, lastname and email must be defined", ErrInvalidParameter)
 	}
 
 	bodyParams := map[string]interface{}{}
