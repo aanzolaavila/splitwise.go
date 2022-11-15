@@ -251,7 +251,7 @@ func (c *Client) RemoveUserFromGroup(ctx context.Context, groupId, userId int) e
 	const path = "/remove_user_from_group"
 
 	if groupId == 0 || userId == 0 {
-		return fmt.Errorf("group id and user id must be defined")
+		return fmt.Errorf("%w: group id and user id must be defined", ErrInvalidParameter)
 	}
 
 	bodyParams := map[string]interface{}{}

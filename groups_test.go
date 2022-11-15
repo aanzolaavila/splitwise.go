@@ -502,3 +502,68 @@ func Test_AddUserToGroupFromUserInfo_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+func Test_RemoveUserFromGroup(t *testing.T) {
+	require := require.New(t)
+
+	const (
+		groupID = 100
+		userID  = 200
+	)
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		in := struct {
+			GroupID int `json:"group_id"`
+			UserID  int `json:"user_id"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.Equal(groupID, in.GroupID)
+		require.Equal(userID, in.UserID)
+
+		const res = `
+{
+  "success": true,
+  "user": {},
+  "errors": {}
+}`
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(res))
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.RemoveUserFromGroup(ctx, groupID, userID)
+	assert.NoError(t, err)
+}
+
+func Test_RemoveUserFromGroup_ShouldFailIfInvalidParameters(t *testing.T) {
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	err := client.RemoveUserFromGroup(ctx, 0, 0)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.RemoveUserFromGroup(ctx, 0, 50)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+
+	err = client.RemoveUserFromGroup(ctx, 50, 0)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+}
+
+func Test_RemoveUserFromGroup_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.RemoveUserFromGroup(ctx, 50, 100)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
