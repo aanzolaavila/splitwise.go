@@ -4,14 +4,13 @@
 
 Yet another community driven Golang SDK for [Splitwise](https://splitwise.com/) 3rd-party APIs made in Go. Inspired from the work done by [anvari1313](https://github.com/anvari1313/splitwise.go/tree/main).
 
-## How to use start using it?
+## How do I start to use it?
 1. Get this package into your project's dependencies
 ```bash
 $ go get -u github.com/aanzolaavila/splitwise.go
 ```
 
-2. Get you application credentials
-   To get them, register you app in [here](https://secure.splitwise.com/apps).
+2. Get you application credentials. To get them, register you app in [here](https://secure.splitwise.com/apps).
 
    You can either use [`ApiKeyAuth`](https://dev.splitwise.com/#section/Authentication/ApiKeyAuth), recommended for testing.
 
