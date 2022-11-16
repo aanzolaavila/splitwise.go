@@ -107,3 +107,72 @@ func Test_getAndCheckDateExpensesParam(t *testing.T) {
 		assert.Zero(t, s)
 	})
 }
+
+func Test_expensesParamsToUrlValues(t *testing.T) {
+	var (
+		require = require.New(t)
+		assert  = assert.New(t)
+	)
+
+	const timeFormat = time.RFC3339
+	now := time.Now()
+	yesterday := now.Add(-24 * time.Hour)
+
+	ps := ExpensesParams{
+		// ints
+		ExpensesGroupId:  1,
+		ExpensesFriendId: "2",
+		ExpensesLimit:    3,
+		ExpensesOffset:   "4",
+		// dates
+		ExpensesDatedBefore:   now,
+		ExpensesDatedAfter:    now.Format(timeFormat),
+		ExpensesUpdatedBefore: now,
+		ExpensesUpdatedAfter:  yesterday,
+	}
+
+	vals, err := expensesParamsToUrlValues(ps)
+	require.NoError(err)
+	require.NotNil(vals)
+	assert.Len(vals, len(ps))
+
+	test := func(field expensesParam, expected string) {
+		if k := string(field); assert.Contains(vals, k) {
+			vs := vals[k]
+			require.Len(vs, 1)
+			v := vs[0]
+			assert.Equal(expected, v)
+		}
+	}
+
+	test(ExpensesGroupId, "1")
+	test(ExpensesFriendId, "2")
+	test(ExpensesLimit, "3")
+	test(ExpensesOffset, "4")
+	test(ExpensesDatedBefore, now.Format(timeFormat))
+	test(ExpensesDatedAfter, now.Format(timeFormat))
+	test(ExpensesUpdatedBefore, now.Format(timeFormat))
+	test(ExpensesUpdatedAfter, yesterday.Format(timeFormat))
+}
+
+func Test_expensesParamsToUrlValues_ErrorCases(t *testing.T) {
+	ps := ExpensesParams{
+		// ints
+		ExpensesGroupId: 1.0,
+	}
+
+	vals, err := expensesParamsToUrlValues(ps)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+	assert.Zero(t, vals)
+
+	ps = ExpensesParams{
+		// dates
+		ExpensesDatedBefore: 2.0,
+	}
+
+	vals, err = expensesParamsToUrlValues(ps)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidParameter)
+	assert.Zero(t, vals)
+}
