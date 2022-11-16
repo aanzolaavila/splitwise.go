@@ -200,7 +200,7 @@ func doBasicErrorChecks(t *testing.T, f func(Client) error) {
 }
 
 func doFaultyClientTest(t *testing.T, f func(Client) error) {
-	t.Run(fmt.Sprintf("%s:doFaultyClientTest", t.Name()), func(t *testing.T) {
+	t.Run("doFaultyClientTest", func(t *testing.T) {
 		client, expectedErr := testClientWithFaultyResponse(t)
 
 		err := f(client)
@@ -223,7 +223,7 @@ func doFaultyResponseBodyTest4XXResponse_shouldFail(t *testing.T, f func(Client)
 	}
 
 	for _, s := range errCodes {
-		t.Run(fmt.Sprintf("%s:doFaultyResponseBodyTest%dResponse_shouldFail", t.Name(), s), func(t *testing.T) {
+		t.Run(fmt.Sprintf("doFaultyResponseBodyTest%dResponse_shouldFail", s), func(t *testing.T) {
 			client, _, cancel := testClientWithFaultyResponseBody(t, s)
 			defer cancel()
 
@@ -263,7 +263,7 @@ func doErrorResponseTests(t *testing.T, f func(Client) error) {
 	}
 
 	for i, c := range checks {
-		t.Run(fmt.Sprintf("%s:errorResponseTests:T%d", t.Name(), i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("errorResponseTests:T%d", i), func(t *testing.T) {
 			err := doErrorResponseTest(t, f, c.StatusCode, c.Body)
 			if c.ExpectedError == nil {
 				assert.NoErrorf(t, err, "was NOT expecting error on test #%d: %v", i, err)
@@ -282,7 +282,7 @@ func doErrorResponseTest(t *testing.T, f func(Client) error, statusCode int, bod
 }
 
 func doInvalidJsonResponseErrorTest(t *testing.T, f func(Client) error) {
-	t.Run(fmt.Sprintf("%s:doInvalidJsonResponseErrorTest", t.Name()), func(t *testing.T) {
+	t.Run("InvalidJsonResponseErrorTest", func(t *testing.T) {
 		const invalidJson = `{ invalid }`
 		client, cancel := testClient(t, http.StatusOK, "", invalidJson)
 		defer cancel()

@@ -36,47 +36,47 @@ const (
 
 func getAndCheckIntExpensesParam(params ExpensesParams, key expensesParam) (string, error) {
 	value, ok := params[key]
-	if ok {
-		strValue, ok := value.(string)
-		if ok {
-			if _, err := strconv.Atoi(strValue); err != nil {
-				return "", fmt.Errorf("%w: %s is not convertable to int", ErrInvalidParameter, key)
-			}
-			return strValue, nil
-		}
-
-		intValue, ok := value.(int)
-		if !ok {
-			return "", fmt.Errorf("%w: %s is not an int", ErrInvalidParameter, key)
-		}
-		return strconv.Itoa(intValue), nil
+	if !ok {
+		return "", nil
 	}
 
-	return "", nil
+	strValue, ok := value.(string)
+	if ok {
+		if _, err := strconv.Atoi(strValue); err != nil {
+			return "", fmt.Errorf("%w: %s is not convertable to int", ErrInvalidParameter, key)
+		}
+		return strValue, nil
+	}
+
+	intValue, ok := value.(int)
+	if !ok {
+		return "", fmt.Errorf("%w: %s is not an int", ErrInvalidParameter, key)
+	}
+	return strconv.Itoa(intValue), nil
 }
 
 func getAndCheckDateExpensesParam(params ExpensesParams, key expensesParam) (string, error) {
 	value, ok := params[key]
-	if ok {
-		const timeFormat = time.RFC3339
-		timeValue, ok := value.(time.Time)
-		if ok {
-			return timeValue.Format(timeFormat), nil
-		}
-
-		strValue, ok := value.(string)
-		if ok {
-			if _, err := time.Parse(timeFormat, strValue); err != nil {
-				return "", fmt.Errorf("%w: %s does not have [%s] format", ErrInvalidParameter, key, timeFormat)
-			}
-
-			return strValue, nil
-		}
-
-		return "", fmt.Errorf("%w: %s is not a string nor a date", ErrInvalidParameter, key)
+	if !ok {
+		return "", nil
 	}
 
-	return "", nil
+	const timeFormat = time.RFC3339
+	timeValue, ok := value.(time.Time)
+	if ok {
+		return timeValue.Format(timeFormat), nil
+	}
+
+	strValue, ok := value.(string)
+	if ok {
+		if _, err := time.Parse(timeFormat, strValue); err != nil {
+			return "", fmt.Errorf("%w: %s does not have [%s] format", ErrInvalidParameter, key, timeFormat)
+		}
+
+		return strValue, nil
+	}
+
+	return "", fmt.Errorf("%w: %s is not a string nor a date", ErrInvalidParameter, key)
 }
 
 func expensesParamsToUrlValues(params ExpensesParams) (url.Values, error) {
