@@ -2,6 +2,8 @@ package splitwise
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
@@ -377,4 +379,47 @@ func Test_GetExpenses_ShouldFailOnInvalidInput(t *testing.T) {
 	})
 	assert.ErrorIs(t, err, ErrInvalidParameter)
 	assert.Len(t, ex, 0)
+}
+
+func Test_GetExpense(t *testing.T) {
+	const expenseID = 100
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		var eID int
+		path := r.URL.Path
+		_, err := fmt.Sscanf(path, DefaultApiVersionPath+"/get_expense/%d", &eID)
+		require.NoError(t, err)
+
+		assert.Equal(t, expenseID, eID)
+
+		res := struct {
+			Expense resources.Expense `json:"expense"`
+		}{
+			Expense: resources.Expense{
+				ID: resources.ExpenseID(expenseID),
+			},
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(res)
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	e, err := client.GetExpense(ctx, expenseID)
+	require.NoError(t, err)
+
+	assert.Equal(t, resources.ExpenseID(expenseID), e.ID)
+}
+
+func Test_GetExpense_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		e, err := client.GetExpense(ctx, 0)
+		assert.Zero(t, e)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
 }

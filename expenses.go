@@ -157,13 +157,13 @@ func (c *Client) GetExpense(ctx context.Context, id int) (resources.Expense, err
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return resources.Expense{}, err
-	}
-
 	var container expenseContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return resources.Expense{}, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return resources.Expense{}, err
 	}
 
