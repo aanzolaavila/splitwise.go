@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"testing"
@@ -416,6 +417,122 @@ func Test_GetExpense_BasicErrorTests(t *testing.T) {
 	f := func(client Client) error {
 		ctx := context.Background()
 		e, err := client.GetExpense(ctx, 0)
+		assert.Zero(t, e)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
+
+func Test_CreateExpenseEqualGroupSplit(t *testing.T) {
+	var (
+		require = require.New(t)
+		assert  = assert.New(t)
+	)
+
+	const (
+		expenseID0 = resources.ExpenseID(50)
+		expenseID1 = resources.ExpenseID(51)
+
+		cost           = 15.0
+		description    = "test description"
+		groupID        = 10
+		details        = "details"
+		repeatInterval = "weekly"
+		currencyCode   = "COP"
+		categoryId     = 50
+	)
+	var (
+		date = time.Date(2022, 11, 17, 12, 55, 57, 0, time.UTC)
+	)
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		in := struct {
+			// mandatory
+			Cost         string `json:"cost"`
+			Description  string `json:"description"`
+			GroupID      int    `json:"group_id"`
+			SplitEqually bool   `json:"split_equally"`
+			// additional details
+			Details        string    `json:"details"`
+			Date           time.Time `json:"date"`
+			RepeatInterval string    `json:"repeat_interval"`
+			CurrencyCode   string    `json:"currency_code"`
+			CategoryID     int       `json:"category_id"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+		defer r.Body.Close()
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.Equal(fmt.Sprintf("%.2f", cost), in.Cost)
+		require.Equal(description, in.Description)
+		require.Equal(groupID, in.GroupID)
+		require.Equal(details, in.Details)
+		require.Equal(date, in.Date)
+		require.Equal(currencyCode, in.CurrencyCode)
+		require.Equal(categoryId, in.CategoryID)
+		require.True(in.SplitEqually)
+
+		res := struct {
+			Expenses []resources.Expense `json:"expenses"`
+		}{
+			Expenses: []resources.Expense{
+				{
+					ID: expenseID0,
+				},
+				{
+					ID: expenseID1,
+				},
+			},
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(res)
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	exs, err := client.CreateExpenseEqualGroupSplit(ctx, cost, description, groupID, CreateExpenseParams{
+		CreateExpenseDetails:        details,
+		CreateExpenseDate:           date,
+		CreateExpenseRepeatInterval: repeatInterval,
+		CreateExpenseCurrencyCode:   currencyCode,
+		CreateExpenseCategoryId:     categoryId,
+	})
+	require.NoError(err)
+
+	require.Len(exs, 2)
+	assert.Equal(resources.ExpenseID(expenseID0), exs[0].ID)
+	assert.Equal(resources.ExpenseID(expenseID1), exs[1].ID)
+}
+
+func Test_CreateExpenseEqualGroupSplit_ShouldFailOnInvalidParams(t *testing.T) {
+	assert := assert.New(t)
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	e, err := client.CreateExpenseEqualGroupSplit(ctx, 0.0, "", 0, nil)
+	assert.ErrorIs(err, ErrInvalidParameter)
+	assert.Zero(e)
+
+	e, err = client.CreateExpenseEqualGroupSplit(ctx, 1.0, "", 0, nil)
+	assert.ErrorIs(err, ErrInvalidParameter)
+	assert.Zero(e)
+
+	e, err = client.CreateExpenseEqualGroupSplit(ctx, 0.0, "description", 0, nil)
+	assert.ErrorIs(err, ErrInvalidParameter)
+	assert.Zero(e)
+}
+
+func Test_CreateExpenseEqualGroupSplit_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		e, err := client.CreateExpenseEqualGroupSplit(ctx, 1.0, "description", 0, nil)
 		assert.Zero(t, e)
 
 		return err
