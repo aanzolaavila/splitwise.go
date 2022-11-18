@@ -354,13 +354,13 @@ func (c *Client) UpdateExpense(ctx context.Context, id int, cost float64, descri
 	}
 	defer res.Body.Close()
 
-	if err := c.getErrorFromResponse(res, rawBody); err != nil {
-		return nil, err
-	}
-
 	var container expensesContainer
 	err = c.unmarshal()(rawBody, &container)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.getErrorFromResponse(res, rawBody); err != nil {
 		return nil, err
 	}
 
