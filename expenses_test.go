@@ -886,3 +886,73 @@ func Test_UpdateExpense_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+func Test_DeleteExpense(t *testing.T) {
+	const expenseID = 100
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		var eID int
+		_, err := fmt.Sscanf(r.URL.Path, DefaultApiVersionPath+"/delete_expense/%d", &eID)
+		require.NoError(t, err)
+		require.Equal(t, expenseID, eID)
+
+		const resp = `
+{
+  "success": true
+}`
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(resp))
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.DeleteExpense(ctx, expenseID)
+	assert.NoError(t, err)
+}
+
+func Test_DeleteExpense_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.DeleteExpense(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
+
+func Test_RestoreExpense(t *testing.T) {
+	const expenseID = 100
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		var eID int
+		_, err := fmt.Sscanf(r.URL.Path, DefaultApiVersionPath+"/undelete_expense/%d", &eID)
+		require.NoError(t, err)
+		require.Equal(t, expenseID, eID)
+
+		const resp = `
+{
+  "success": true
+}`
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(resp))
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	err := client.RestoreExpense(ctx, expenseID)
+	assert.NoError(t, err)
+}
+
+func Test_RestoreExpense_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		err := client.RestoreExpense(ctx, 0)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
