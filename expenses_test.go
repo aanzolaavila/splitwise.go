@@ -540,3 +540,170 @@ func Test_CreateExpenseEqualGroupSplit_BasicErrorTests(t *testing.T) {
 
 	doBasicErrorChecks(t, f)
 }
+
+func Test_CreateExpenseByShares(t *testing.T) {
+	var (
+		require = require.New(t)
+		assert  = assert.New(t)
+	)
+
+	const (
+		cost           = 15.0
+		description    = "description"
+		groupID        = 50
+		details        = "details"
+		repeatInterval = "weekly"
+		currencyCode   = "COP"
+		categoryId     = 20
+
+		user0UserID    = 30
+		user0PaidShare = 14.0
+		user0OwedShare = 12.0
+
+		user1Firstname = "Test"
+		user1Lastname  = "Testing"
+		user1Email     = "testing@test.com"
+		user1PaidShare = 16.0
+		user1OwedShare = 15.0
+
+		expenseID = 300
+	)
+
+	var (
+		date = time.Date(2022, 11, 17, 12, 55, 57, 0, time.UTC)
+	)
+
+	client, cancel := testClientWithHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		in := struct {
+			// mandatory
+			Cost        string `json:"cost"`
+			Description string `json:"description"`
+			GroupID     int    `json:"group_id"`
+			// additional details
+			Details        string    `json:"details"`
+			Date           time.Time `json:"date"`
+			RepeatInterval string    `json:"repeat_interval"`
+			CurrencyCode   string    `json:"currency_code"`
+			CategoryID     int       `json:"category_id"`
+
+			// users
+			User0UserID    int    `json:"users__0__user_id"`
+			User0PaidShare string `json:"users__0__paid_share"`
+			User0OwedShare string `json:"users__0__owed_share"`
+
+			User1Firstname string `json:"users__1__first_name"`
+			User1Lastname  string `json:"users__1__last_name"`
+			User1Email     string `json:"users__1__email"`
+			User1PaidShare string `json:"users__1__paid_share"`
+			User1OwedShare string `json:"users__1__owed_share"`
+		}{}
+
+		rawBody, err := io.ReadAll(r.Body)
+		require.NoError(err)
+
+		err = json.Unmarshal(rawBody, &in)
+		require.NoError(err)
+
+		require.Equal(fmt.Sprintf("%.2f", cost), in.Cost)
+		require.Equal(description, in.Description)
+		require.Equal(groupID, in.GroupID)
+
+		require.Equal(details, in.Details)
+		require.Equal(date, in.Date)
+		require.Equal(repeatInterval, in.RepeatInterval)
+		require.Equal(currencyCode, in.CurrencyCode)
+		require.Equal(categoryId, in.CategoryID)
+
+		require.Equal(user0UserID, in.User0UserID)
+		require.Equal(fmt.Sprintf("%.2f", user0PaidShare), in.User0PaidShare)
+		require.Equal(fmt.Sprintf("%.2f", user0OwedShare), in.User0OwedShare)
+
+		require.Equal(user1Firstname, in.User1Firstname)
+		require.Equal(user1Lastname, in.User1Lastname)
+		require.Equal(fmt.Sprintf("%.2f", user1PaidShare), in.User1PaidShare)
+		require.Equal(fmt.Sprintf("%.2f", user1OwedShare), in.User1OwedShare)
+
+		res := struct {
+			Expenses []resources.Expense `json:"expenses"`
+		}{
+			Expenses: []resources.Expense{
+				{
+					ID: resources.ExpenseID(expenseID),
+				},
+			},
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(res)
+	})
+	defer cancel()
+
+	ctx := context.Background()
+	exs, err := client.CreateExpenseByShares(ctx, cost, description, groupID, CreateExpenseParams{
+		CreateExpenseDetails:        details,
+		CreateExpenseDate:           date,
+		CreateExpenseRepeatInterval: repeatInterval,
+		CreateExpenseCurrencyCode:   currencyCode,
+		CreateExpenseCategoryId:     categoryId,
+	}, []ExpenseUser{
+		{
+			Id:        resources.UserID(user0UserID),
+			PaidShare: user0PaidShare,
+			OwedShare: user0OwedShare,
+		},
+		{
+			Firstname: user1Firstname,
+			Lastname:  user1Lastname,
+			Email:     user1Email,
+			PaidShare: user1PaidShare,
+			OwedShare: user1OwedShare,
+		},
+	})
+
+	require.NoError(err)
+	require.Len(exs, 1)
+	assert.Equal(resources.ExpenseID(expenseID), exs[0].ID)
+}
+
+func Test_CreateExpenseByShares_ShouldFaildOnInvalidInput(t *testing.T) {
+	client := testClientThatFailsTestIfHttpIsCalled(t)
+
+	ctx := context.Background()
+	t.Run("missingCostAndDescription", func(t *testing.T) {
+		e, err := client.CreateExpenseByShares(ctx, 0.0, "", 0, nil, nil)
+		assert.ErrorIs(t, err, ErrInvalidParameter)
+		assert.Zero(t, e)
+	})
+
+	t.Run("missingCost", func(t *testing.T) {
+		e, err := client.CreateExpenseByShares(ctx, 0.0, "description", 0, nil, nil)
+		assert.ErrorIs(t, err, ErrInvalidParameter)
+		assert.Zero(t, e)
+	})
+
+	t.Run("missingDescription", func(t *testing.T) {
+		e, err := client.CreateExpenseByShares(ctx, 1.0, "", 0, nil, nil)
+		assert.ErrorIs(t, err, ErrInvalidParameter)
+		assert.Zero(t, e)
+	})
+
+	t.Run("invalidUser", func(t *testing.T) {
+		e, err := client.CreateExpenseByShares(ctx, 1.0, "description", 0, nil, []ExpenseUser{
+			{},
+		})
+		assert.ErrorIs(t, err, ErrInvalidParameter)
+		assert.Zero(t, e)
+	})
+}
+
+func Test_CreateExpenseByShares_BasicErrorTests(t *testing.T) {
+	f := func(client Client) error {
+		ctx := context.Background()
+		e, err := client.CreateExpenseByShares(ctx, 1.0, "description", 0, nil, nil)
+		assert.Zero(t, e)
+
+		return err
+	}
+
+	doBasicErrorChecks(t, f)
+}
