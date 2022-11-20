@@ -1,7 +1,15 @@
 # splitwise.go
-[![Go tests](https://github.com/aanzolaavila/splitwise.go/actions/workflows/go.yml/badge.svg)](https://github.com/aanzolaavila/splitwise.go/actions/workflows/go.yml)
-[![codecov](https://codecov.io/gh/aanzolaavila/splitwise.go/branch/main/graph/badge.svg?token=YB1C70XRP7)](https://codecov.io/gh/aanzolaavila/splitwise.go)
-[![Known Vulnerabilities](https://snyk.io/test/github/aanzolaavila/splitwise.go/badge.svg)](https://snyk.io/test/github/aanzolaavila/splitwise.go)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=coverage)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=bugs)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
 
 Yet another community driven Golang SDK for [Splitwise](https://splitwise.com/) 3rd-party APIs made in Go. Inspired from the work done by [anvari1313](https://github.com/anvari1313/splitwise.go/tree/main).
 
