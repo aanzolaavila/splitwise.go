@@ -1,6 +1,7 @@
 # splitwise.go
 [![Go tests](https://github.com/aanzolaavila/splitwise.go/actions/workflows/go.yml/badge.svg)](https://github.com/aanzolaavila/splitwise.go/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/aanzolaavila/splitwise.go/branch/main/graph/badge.svg?token=YB1C70XRP7)](https://codecov.io/gh/aanzolaavila/splitwise.go)
+[![Known Vulnerabilities](https://snyk.io/test/github/aanzolaavila/splitwise.go/badge.svg)](https://snyk.io/test/github/aanzolaavila/splitwise.go)
 
 Yet another community driven Golang SDK for [Splitwise](https://splitwise.com/) 3rd-party APIs made in Go. Inspired from the work done by [anvari1313](https://github.com/anvari1313/splitwise.go/tree/main).
 
