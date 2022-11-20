@@ -10,6 +10,8 @@
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=aanzolaavila_splitwise.go&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=aanzolaavila_splitwise.go)
+![GitHub repo size](https://img.shields.io/github/repo-size/aanzolaavila/splitwise.go)
+![GitHub](https://img.shields.io/github/license/aanzolaavila/splitwise.go)
 
 Yet another community driven Golang SDK for [Splitwise](https://splitwise.com/) 3rd-party APIs made in Go. Inspired from the work done by [anvari1313](https://github.com/anvari1313/splitwise.go/tree/main).
 
